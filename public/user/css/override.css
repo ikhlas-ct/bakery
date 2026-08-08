@@ -1,0 +1,17 @@
+/* Prevent any FontAwesome icons in the topbar from shrinking */
+.topbar-icon .nav-link {
+    display: flex;           /* pastikan flex container */
+    align-items: center;
+  }
+
+  .topbar-icon .nav-link i.fa {
+    flex-shrink: 0 !important;   /* jangan ikut menyusut */
+    font-size: 1.4rem !important; /* atur besar tetap */
+    line-height: 1 !important;    /* supaya center vertikal */
+  }
+
+  /* Jika kamu memakai badge atau ikon lain di notifikasi */
+  .topbar-icon .notification,
+  .topbar-icon .notif-icon i {
+    flex-shrink: 0 !important;
+  }
