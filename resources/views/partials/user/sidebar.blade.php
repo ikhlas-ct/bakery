@@ -56,6 +56,13 @@
                     <h4 class="text-section">Data Master</h4>
                 </li>
 
+                <li class="nav-item {{ request()->routeIs('admin.produsen.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.produsen.index') }}">
+                        <i class="fas fa-industry"></i>
+                        <p>Data Produsen</p>
+                    </a>
+                </li>
+
                 {{-- TODO: sesuaikan nama route saat sudah dibuat --}}
                 {{--
                 <li class="nav-item {{ request()->routeIs('kategori-barang.*') ? 'active' : '' }}">
@@ -76,13 +83,6 @@
                     <a href="{{ route('bahan-baku.index') }}">
                         <i class="fas fa-boxes"></i>
                         <p>Bahan Baku</p>
-                    </a>
-                </li>
-
-                <li class="nav-item {{ request()->routeIs('produsen.*') ? 'active' : '' }}">
-                    <a href="{{ route('produsen.index') }}">
-                        <i class="fas fa-industry"></i>
-                        <p>Produsen</p>
                     </a>
                 </li>
                 --}}
@@ -155,6 +155,13 @@
                     </a>
                 </li>
 
+                <li class="nav-item {{ request()->routeIs('pemilik.produsen.*') ? 'active' : '' }}">
+                    <a href="{{ route('pemilik.produsen.index') }}">
+                        <i class="fas fa-industry"></i>
+                        <p>Data Produsen</p>
+                    </a>
+                </li>
+
                 <li class="nav-section">
                     <span class="sidebar-mini-icon">
                         <i class="fa fa-ellipsis-h"></i>
@@ -174,6 +181,20 @@
 
             {{-- ================= MENU KHUSUS PRODUSEN ================= --}}
             @if ($role === 'produsen')
+                <li class="nav-section">
+                    <span class="sidebar-mini-icon">
+                        <i class="fa fa-ellipsis-h"></i>
+                    </span>
+                    <h4 class="text-section">Akun</h4>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('produsen.profile') ? 'active' : '' }}">
+                    <a href="{{ route('produsen.profile') }}">
+                        <i class="fas fa-user-circle"></i>
+                        <p>Profil Saya</p>
+                    </a>
+                </li>
+
                 <li class="nav-section">
                     <span class="sidebar-mini-icon">
                         <i class="fa fa-ellipsis-h"></i>
