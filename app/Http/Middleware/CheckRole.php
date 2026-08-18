@@ -18,7 +18,7 @@ class CheckRole
         $user = auth()->user();
 
         // Cek status aktif
-        if ($user->status !== 'aktif') {
+        if (! $user->is_active) {
             auth()->logout();
             return redirect()->route('login')
                 ->with('error', 'Akun Anda telah dinonaktifkan. Hubungi administrator.');

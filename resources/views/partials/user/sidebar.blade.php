@@ -2,11 +2,19 @@
 <div class="sidebar-logo">
     <!-- Logo Header -->
     <div class="logo-header" data-background-color="dark">
-        <a href="{{ route('dinsos.dashboard') }}" class="logo d-flex align-items-center">
+        @php
+            $dashboardRoute = match (auth()->user()->role) {
+                'admin'    => route('admin.dashboard'),
+                'pemilik'  => route('pemilik.dashboard'),
+                'produsen' => route('produsen.dashboard'),
+                default    => route('login'),
+            };
+        @endphp
+        <a href="{{ $dashboardRoute }}" class="logo d-flex align-items-center">
             {{-- Gunakan accessor logo_url agar path storage/ selalu benar --}}
             <img src="{{ $settings->logo_url }}"
                 alt="navbar brand" class="navbar-brand" height="50" />
-            <span class="ms-2 text-white">{{ $settings->nama ?? 'Nama Website' }}</span>
+            <span class="ms-2 text-white">{{ $settings->nama ?? 'Roti Baru Bakery' }}</span>
         </a>
 
         <div class="nav-toggle">
@@ -26,46 +34,96 @@
 
 <div class="sidebar-wrapper scrollbar scrollbar-inner">
     <div class="sidebar-content">
+        @php
+            $role = auth()->user()->role;
+        @endphp
         <ul class="nav nav-secondary">
 
             <!-- Dashboard -->
-            <li class="nav-item">
-                @php
-                    $dashboardRoute = match (auth()->user()->role) {
-                        'admin_dinsos' => route('dinsos.dashboard'),
-                        'admin_panti'  => route('admin_panti.dashboard'),
-                        default        => route('donatur.dashboard'),
-                    };
-                @endphp
+            <li class="nav-item {{ request()->routeIs('admin.dashboard') || request()->routeIs('pemilik.dashboard') || request()->routeIs('produsen.dashboard') ? 'active' : '' }}">
                 <a href="{{ $dashboardRoute }}">
                     <i class="fas fa-tachometer-alt"></i>
                     <p>Dashboard</p>
                 </a>
             </li>
 
-            <!-- Profile -->
-            <li class="nav-item">
-                @php
-                    $role = auth()->user()->role;
-                    $profilRoute = match ($role) {
-                        'admin_dinsos' => route('pegawai.profil'),
-                        'admin_panti'  => route('admin_panti.profil'),
-                        default        => route('donatur.profil'),
-                    };
-                    $profilNama =
-                        match ($role) {
-                            'admin_dinsos' => auth()->user()->pegawai?->nama,
-                            'admin_panti'  => auth()->user()->pengurus?->nama,
-                            default        => auth()->user()->donatur?->nama,
-                        } ?? auth()->user()->username;
-                @endphp
-                <a href="{{ $profilRoute }}">
-                    <i class="fas fa-user-circle"></i>
-                    <p>{{ $profilNama }}</p>
-                </a>
-            </li>
+            {{-- ================= MENU KHUSUS ADMIN ================= --}}
+            @if ($role === 'admin')
+                <li class="nav-section">
+                    <span class="sidebar-mini-icon">
+                        <i class="fa fa-ellipsis-h"></i>
+                    </span>
+                    <h4 class="text-section">Data Master</h4>
+                </li>
 
-            @if (auth()->user()->role === 'admin_dinsos')
+                {{-- TODO: sesuaikan nama route saat sudah dibuat --}}
+                {{--
+                <li class="nav-item {{ request()->routeIs('kategori-barang.*') ? 'active' : '' }}">
+                    <a href="{{ route('kategori-barang.index') }}">
+                        <i class="fas fa-tags"></i>
+                        <p>Kategori Barang</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('satuan.*') ? 'active' : '' }}">
+                    <a href="{{ route('satuan.index') }}">
+                        <i class="fas fa-balance-scale"></i>
+                        <p>Satuan</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('bahan-baku.*') ? 'active' : '' }}">
+                    <a href="{{ route('bahan-baku.index') }}">
+                        <i class="fas fa-boxes"></i>
+                        <p>Bahan Baku</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('produsen.*') ? 'active' : '' }}">
+                    <a href="{{ route('produsen.index') }}">
+                        <i class="fas fa-industry"></i>
+                        <p>Produsen</p>
+                    </a>
+                </li>
+                --}}
+
+                <li class="nav-section">
+                    <span class="sidebar-mini-icon">
+                        <i class="fa fa-ellipsis-h"></i>
+                    </span>
+                    <h4 class="text-section">Transaksi</h4>
+                </li>
+
+                {{--
+                <li class="nav-item {{ request()->routeIs('permintaan-bahan-baku.*') ? 'active' : '' }}">
+                    <a href="{{ route('permintaan-bahan-baku.index') }}">
+                        <i class="fas fa-file-signature"></i>
+                        <p>Permintaan Bahan Baku</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('penerimaan-bahan-baku.*') ? 'active' : '' }}">
+                    <a href="{{ route('penerimaan-bahan-baku.index') }}">
+                        <i class="fas fa-truck-loading"></i>
+                        <p>Penerimaan Bahan Baku</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('pemakaian-bahan-baku.*') ? 'active' : '' }}">
+                    <a href="{{ route('pemakaian-bahan-baku.index') }}">
+                        <i class="fas fa-utensils"></i>
+                        <p>Pemakaian Bahan Baku</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('pengalihan-bahan-baku.*') ? 'active' : '' }}">
+                    <a href="{{ route('pengalihan-bahan-baku.index') }}">
+                        <i class="fas fa-random"></i>
+                        <p>Pengalihan Bahan Baku</p>
+                    </a>
+                </li>
+                --}}
+
                 <li class="nav-section">
                     <span class="sidebar-mini-icon">
                         <i class="fa fa-ellipsis-h"></i>
@@ -73,128 +131,64 @@
                     <h4 class="text-section">Pengaturan</h4>
                 </li>
 
-                <!-- Website Setting -->
                 <li class="nav-item {{ request()->routeIs('setting.website.*') ? 'active' : '' }}">
                     <a href="{{ route('setting.website.edit') }}">
                         <i class="fas fa-cogs"></i>
-                        <p>Website Setting</p>
+                        <p>Pengaturan Website</p>
                     </a>
                 </li>
             @endif
 
-            @if (auth()->user()->role === 'admin_dinsos' || auth()->user()->role === 'admin_panti')
+            {{-- ================= MENU KHUSUS PEMILIK ================= --}}
+            @if ($role === 'pemilik')
                 <li class="nav-section">
                     <span class="sidebar-mini-icon">
                         <i class="fa fa-ellipsis-h"></i>
                     </span>
-                    <h4 class="text-section">Data Master</h4>
+                    <h4 class="text-section">Manajemen Pengguna</h4>
                 </li>
-            @endif
 
-            @if (auth()->user()->role === 'admin_dinsos')
-                <li class="nav-item {{ request()->routeIs('panti-asuhan.*') ? 'active' : '' }}">
-                    <a href="{{ route('panti-asuhan.index') }}">
-                        <i class="fas fa-house-user"></i>
-                        <p>Panti Asuhan</p>
+                <li class="nav-item {{ request()->routeIs('pemilik.admin.*') ? 'active' : '' }}">
+                    <a href="{{ route('pemilik.admin.index') }}">
+                        <i class="fas fa-user-shield"></i>
+                        <p>Data Admin</p>
                     </a>
                 </li>
 
-                <li class="nav-item {{ request()->routeIs('pegawai.*') ? 'active' : '' }}">
-                    <a href="{{ route('pegawai.index') }}">
-                        <i class="fas fa-users"></i>
-                        <p>Pegawai</p>
-                    </a>
+                <li class="nav-section">
+                    <span class="sidebar-mini-icon">
+                        <i class="fa fa-ellipsis-h"></i>
+                    </span>
+                    <h4 class="text-section">Keuangan</h4>
                 </li>
 
-                <li class="nav-item {{ request()->routeIs('pengurus.*') ? 'active' : '' }}">
-                    <a href="{{ route('pengurus.index') }}">
-                        <i class="fas fa-user-tie"></i>
-                        <p>Pengurus</p>
-                    </a>
-                </li>
-
-                <li class="nav-item {{ request()->routeIs('donatur.*') ? 'active' : '' }}">
-                    <a href="{{ route('donatur.index') }}">
-                        <i class="fas fa-hand-holding-heart"></i>
-                        <p>Donatur</p>
-                    </a>
-                </li>
-            @endif
-
-            @if (auth()->user()->role === 'admin_dinsos' || auth()->user()->role === 'admin_panti')
-                <li class="nav-item {{ request()->routeIs('anak-asuh.*') ? 'active' : '' }}">
-                    <a href="{{ route('anak-asuh.index') }}">
-                        <i class="fas fa-child"></i>
-                        <p>Anak Asuh</p>
-                    </a>
-                </li>
-            @endif
-
-            <li class="nav-section">
-                <span class="sidebar-mini-icon">
-                    <i class="fa fa-ellipsis-h"></i>
-                </span>
-                <h4 class="text-section">Proses &amp; Kegiatan</h4>
-            </li>
-
-            @if (auth()->user()->role === 'admin_panti' || auth()->user()->role === 'admin_dinsos')
-                <li class="nav-item {{ request()->routeIs('konten.*') && request()->route('jenis') === 'kegiatan' ? 'active' : '' }}">
-                    <a href="{{ route('konten.index', 'kegiatan') }}">
-                        <i class="fas fa-calendar-alt"></i>
-                        <p>Kegiatan</p>
-                    </a>
-                </li>
-            @endif
-
-            @if (auth()->user()->role === 'donatur')
-                <li class="nav-item {{ request()->routeIs('panti-asuhan.*') ? 'active' : '' }}">
-                    <a href="{{ route('panti-asuhan.index') }}">
-                        <i class="fas fa-house-user"></i>
-                        <p>Panti Asuhan</p>
-                    </a>
-                </li>
-            @endif
-
-            @if (auth()->user()->role === 'admin_dinsos')
-                <li class="nav-item {{ request()->routeIs('konten.*') && request()->route('jenis') === 'berita' ? 'active' : '' }}">
-                    <a href="{{ route('konten.index', 'berita') }}">
-                        <i class="fas fa-newspaper"></i>
-                        <p>Berita</p>
-                    </a>
-                </li>
-            @endif
-
-            <li class="nav-item {{ request()->routeIs('donasi.*') ? 'active' : '' }}">
-                <a href="{{ route('donasi.index') }}">
-                    <i class="fas fa-donate"></i>
-                    <p>Donasi</p>
-                </a>
-            </li>
-
-            @if (auth()->user()->role === 'admin_panti' || auth()->user()->role === 'admin_dinsos')
-                <li class="nav-item {{ request()->routeIs('keuangan.*') ? 'active' : '' }}">
-                    <a href="{{ route('keuangan.index') }}">
+                {{--
+                <li class="nav-item {{ request()->routeIs('pembayaran.*') ? 'active' : '' }}">
+                    <a href="{{ route('pembayaran.index') }}">
                         <i class="fas fa-money-bill-wave"></i>
-                        <p>Keuangan</p>
+                        <p>Pembayaran</p>
                     </a>
                 </li>
+                --}}
             @endif
 
-            {{-- ── Laporan (hanya admin_dinsos) ── --}}
-            @if (auth()->user()->role === 'admin_dinsos')
+            {{-- ================= MENU KHUSUS PRODUSEN ================= --}}
+            @if ($role === 'produsen')
                 <li class="nav-section">
                     <span class="sidebar-mini-icon">
                         <i class="fa fa-ellipsis-h"></i>
                     </span>
-                    <h4 class="text-section">Laporan</h4>
+                    <h4 class="text-section">Pasokan</h4>
                 </li>
 
-                <li class="nav-item {{ request()->routeIs('laporan.*') ? 'active' : '' }}">
-                    <a href="{{ route('laporan.index') }}">
-                        <i class="fas fa-chart-bar"></i>
-                        <p>Cetak Laporan</p>
+                {{--
+                <li class="nav-item {{ request()->routeIs('permintaan-bahan-baku.*') ? 'active' : '' }}">
+                    <a href="{{ route('permintaan-bahan-baku.index') }}">
+                        <i class="fas fa-file-signature"></i>
+                        <p>Permintaan Masuk</p>
                     </a>
                 </li>
+                --}}
             @endif
 
             <!-- Logout -->

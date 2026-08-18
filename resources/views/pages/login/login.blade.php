@@ -41,13 +41,14 @@
                                     <div class="form-floating mb-3">
                                         <input type="text"
                                                class="form-control"
-                                               name="username"
-                                               id="username"
-                                               value="{{ old('username') }}"
-                                               placeholder="Username"
+                                               name="login"
+                                               id="login"
+                                               value="{{ old('login') }}"
+                                               placeholder="Username atau Email"
+                                               autofocus
                                                required>
-                                        <label for="username" class="form-label">Username</label>
-                                        @error('username')
+                                        <label for="login" class="form-label">Username atau Email</label>
+                                        @error('login')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
                                     </div>
@@ -64,6 +65,17 @@
                                         @error('password')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
+                                    </div>
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="form-check mb-2">
+                                        <input type="checkbox"
+                                               class="form-check-input"
+                                               name="remember"
+                                               id="remember"
+                                               value="1">
+                                        <label class="form-check-label" for="remember">Ingat saya</label>
                                     </div>
                                 </div>
 

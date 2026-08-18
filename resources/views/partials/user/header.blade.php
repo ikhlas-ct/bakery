@@ -5,30 +5,19 @@
 
             // Route dashboard sesuai role
             $dashboardRoute = match ($role) {
-                'admin_dinsos' => route('dinsos.dashboard'),
-                'admin_panti'  => route('admin_panti.dashboard'),
-                default        => route('donatur.dashboard'),
+                'admin'    => route('admin.dashboard'),
+                'pemilik'  => route('pemilik.dashboard'),
+                'produsen' => route('produsen.dashboard'),
+                default    => route('login'),
             };
 
-            // Route profil sesuai role
-            $profilRoute = match ($role) {
-                'admin_dinsos' => route('pegawai.profil'),
-                'admin_panti'  => route('admin_panti.profil'),
-                default        => route('donatur.profil'),
-            };
+            // Data profil: users.username / users.email / users.foto_profil
+            // (tabel admins/pemiliks/produsens tidak punya kolom nama/foto sendiri)
+            $profilNama  = auth()->user()->username;
+            $profilEmail = auth()->user()->email ?? 'Tidak ada email';
 
-            // Data profil (nama, email, foto) sesuai role
-            $profilData = match ($role) {
-                'admin_dinsos' => auth()->user()->pegawai,
-                'admin_panti'  => auth()->user()->pengurus,
-                default        => auth()->user()->donatur,
-            };
-
-            $profilNama  = $profilData?->nama ?? auth()->user()->username;
-            $profilEmail = $profilData?->email ?? auth()->user()->email ?? 'Tidak ada email';
-
-            $profilFoto = !empty($profilData?->foto_profil) && file_exists(public_path($profilData->foto_profil))
-                ? asset($profilData->foto_profil)
+            $profilFoto = !empty(auth()->user()->foto_profil) && file_exists(public_path(auth()->user()->foto_profil))
+                ? asset(auth()->user()->foto_profil)
                 : asset('default-image/default-user.png');
         @endphp
 
@@ -68,9 +57,8 @@
                                 <div class="u-text">
                                     <h4>{{ $profilNama }}</h4>
                                     <p class="text-muted">{{ $profilEmail }}</p>
-                                    <a href="{{ $profilRoute }}" class="btn btn-xs btn-secondary btn-sm">
-                                        View Profile
-                                    </a>
+                                    {{-- TODO: aktifkan kalau route profil sudah ada --}}
+                                    {{-- <a href="{{ route('profil.edit') }}" class="btn btn-xs btn-secondary btn-sm">View Profile</a> --}}
                                 </div>
                             </div>
                         </li>

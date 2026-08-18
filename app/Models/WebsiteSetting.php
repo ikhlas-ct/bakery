@@ -20,11 +20,6 @@ class WebsiteSetting extends Model
         'social_instagram',
         'social_twitter',
         'social_youtube',
-        'title_pengantar',
-        'paragraf_pengantar',
-        'gambar_pengantar',
-        'about_us',
-        'why_choose_us',
     ];
 
     // ──────────────────────────────────────────────────────────
@@ -42,22 +37,6 @@ class WebsiteSetting extends Model
         }
 
         return asset('storage/' . $this->logo);
-    }
-
-    // ──────────────────────────────────────────────────────────
-    //  ACCESSOR: URL gambar pengantar
-    // ──────────────────────────────────────────────────────────
-    public function getGambarPengantarUrlAttribute(): string
-    {
-        if (!$this->gambar_pengantar) {
-            return asset('default-image/default_banner.png');
-        }
-
-        if (str_starts_with($this->gambar_pengantar, 'http')) {
-            return $this->gambar_pengantar;
-        }
-
-        return asset('storage/' . $this->gambar_pengantar);
     }
 
     // ──────────────────────────────────────────────────────────

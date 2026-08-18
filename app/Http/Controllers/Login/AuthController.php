@@ -16,35 +16,59 @@ class AuthController extends Controller
     public function login_post(Request $request)
     {
         $request->validate([
-            'username' => 'required|string',
+            'login'    => 'required|string',
             'password' => 'required|string',
         ]);
 
-        $credentials = $request->only('username', 'password');
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
+        // Deteksi otomatis: kalau formatnya email, login pakai kolom email,
+        // kalau bukan, login pakai kolom username.
+        $loginField = filter_var($request->login, FILTER_VALIDATE_EMAIL)
+            ? 'email'
+            : 'username';
 
-            $user = Auth::user();
+        $credentials = [
+            $loginField => $request->login,
+            'password'  => $request->password,
+        ];
 
-            // Redirect berdasarkan role
-            if ($user->isAdminDinsos()) {
-                return redirect()->route('dinsos.dashboard')->with('success', 'Login berhasil');
-            } elseif ($user->isAdminPanti()) {
-                return redirect()->route('admin_panti.dashboard')->with('success', 'Login berhasil');
-            } elseif ($user->isDonatur()) {
-                return redirect()->route('donatur.dashboard')->with('success', 'Login berhasil');
-            }
+        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+            return back()
+                ->withErrors(['login' => 'Username/Email atau password salah.'])
+                ->onlyInput('login');
+        }
 
-            // Fallback jika role tidak dikenali
+        $request->session()->regenerate();
+
+        $user = Auth::user();
+
+        if (! $user->is_active) {
             Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
             return back()->withErrors([
-                'username' => 'Role tidak dikenali, hubungi administrator.',
+                'login' => 'Akun Anda tidak aktif, hubungi administrator.',
             ]);
         }
 
+        // Redirect berdasarkan role
+        switch ($user->role) {
+            case 'admin':
+                return redirect()->route('admin.dashboard')->with('success', 'Login berhasil');
+            case 'pemilik':
+                return redirect()->route('pemilik.dashboard')->with('success', 'Login berhasil');
+            case 'produsen':
+                return redirect()->route('produsen.dashboard')->with('success', 'Login berhasil');
+        }
+
+        // Fallback jika role tidak dikenali
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         return back()->withErrors([
-            'username' => 'Username atau password salah.',
-        ])->onlyInput('username');
+            'login' => 'Role tidak dikenali, hubungi administrator.',
+        ]);
     }
 
     public function logout(Request $request)
