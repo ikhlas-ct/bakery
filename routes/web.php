@@ -5,6 +5,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\Pemilik\AdminController;
 use App\Http\Controllers\ProdusenController;
+use App\Http\Controllers\KategoriBarangController;
+use App\Http\Controllers\SatuanController;
 use Illuminate\Support\Facades\Route;
 
 // =================== Auth Routes ===================
@@ -51,6 +53,26 @@ Route::middleware(['auth', 'role:pemilik'])->group(function () {
     Route::get('/pemilik/produsen/{produsen}/edit', [ProdusenController::class, 'edit'])->name('pemilik.produsen.edit');
     Route::put('/pemilik/produsen/{produsen}', [ProdusenController::class, 'update'])->name('pemilik.produsen.update');
     Route::delete('/pemilik/produsen/{produsen}', [ProdusenController::class, 'destroy'])->name('pemilik.produsen.destroy');
+});
+
+// =================== Master Data (dikelola oleh Admin saja) ===================
+Route::middleware(['auth', 'role:admin'])->group(function () {
+
+    // ── CRUD Kategori Barang (tanpa show) ──
+    Route::get('/kategori-barang', [KategoriBarangController::class, 'index'])->name('kategori-barang.index');
+    Route::get('/kategori-barang/create', [KategoriBarangController::class, 'create'])->name('kategori-barang.create');
+    Route::post('/kategori-barang', [KategoriBarangController::class, 'store'])->name('kategori-barang.store');
+    Route::get('/kategori-barang/{kategoriBarang}/edit', [KategoriBarangController::class, 'edit'])->name('kategori-barang.edit');
+    Route::put('/kategori-barang/{kategoriBarang}', [KategoriBarangController::class, 'update'])->name('kategori-barang.update');
+    Route::delete('/kategori-barang/{kategoriBarang}', [KategoriBarangController::class, 'destroy'])->name('kategori-barang.destroy');
+
+    // ── CRUD Satuan (tanpa show) ──
+    Route::get('/satuan', [SatuanController::class, 'index'])->name('satuan.index');
+    Route::get('/satuan/create', [SatuanController::class, 'create'])->name('satuan.create');
+    Route::post('/satuan', [SatuanController::class, 'store'])->name('satuan.store');
+    Route::get('/satuan/{satuan}/edit', [SatuanController::class, 'edit'])->name('satuan.edit');
+    Route::put('/satuan/{satuan}', [SatuanController::class, 'update'])->name('satuan.update');
+    Route::delete('/satuan/{satuan}', [SatuanController::class, 'destroy'])->name('satuan.destroy');
 });
 
 Route::middleware(['auth', 'role:produsen'])->group(function () {

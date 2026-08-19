@@ -63,8 +63,6 @@
                     </a>
                 </li>
 
-                {{-- TODO: sesuaikan nama route saat sudah dibuat --}}
-                {{--
                 <li class="nav-item {{ request()->routeIs('kategori-barang.*') ? 'active' : '' }}">
                     <a href="{{ route('kategori-barang.index') }}">
                         <i class="fas fa-tags"></i>
@@ -79,6 +77,8 @@
                     </a>
                 </li>
 
+                {{-- TODO: sesuaikan nama route saat controller Bahan Baku sudah dibuat --}}
+                {{--
                 <li class="nav-item {{ request()->routeIs('bahan-baku.*') ? 'active' : '' }}">
                     <a href="{{ route('bahan-baku.index') }}">
                         <i class="fas fa-boxes"></i>
