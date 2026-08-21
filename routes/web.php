@@ -7,6 +7,8 @@ use App\Http\Controllers\Pemilik\AdminController;
 use App\Http\Controllers\ProdusenController;
 use App\Http\Controllers\KategoriBarangController;
 use App\Http\Controllers\SatuanController;
+use App\Http\Controllers\BahanBakuController;
+use App\Http\Controllers\BahanBakuProdusenController;
 use Illuminate\Support\Facades\Route;
 
 // =================== Auth Routes ===================
@@ -73,6 +75,14 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/satuan/{satuan}/edit', [SatuanController::class, 'edit'])->name('satuan.edit');
     Route::put('/satuan/{satuan}', [SatuanController::class, 'update'])->name('satuan.update');
     Route::delete('/satuan/{satuan}', [SatuanController::class, 'destroy'])->name('satuan.destroy');
+
+    // ── CRUD Bahan Baku (tanpa show) ──
+    Route::get('/bahan-baku', [BahanBakuController::class, 'index'])->name('bahan-baku.index');
+    Route::get('/bahan-baku/create', [BahanBakuController::class, 'create'])->name('bahan-baku.create');
+    Route::post('/bahan-baku', [BahanBakuController::class, 'store'])->name('bahan-baku.store');
+    Route::get('/bahan-baku/{bahanBaku}/edit', [BahanBakuController::class, 'edit'])->name('bahan-baku.edit');
+    Route::put('/bahan-baku/{bahanBaku}', [BahanBakuController::class, 'update'])->name('bahan-baku.update');
+    Route::delete('/bahan-baku/{bahanBaku}', [BahanBakuController::class, 'destroy'])->name('bahan-baku.destroy');
 });
 
 Route::middleware(['auth', 'role:produsen'])->group(function () {
@@ -81,4 +91,13 @@ Route::middleware(['auth', 'role:produsen'])->group(function () {
     // =================== Profil Produsen (dikelola oleh Produsen sendiri) ===================
     Route::get('/produsen/profile', [ProdusenController::class, 'profile'])->name('produsen.profile');
     Route::put('/produsen/profile', [ProdusenController::class, 'updateProfile'])->name('produsen.profile.update');
+
+    // =================== Bahan Baku yang Disediakan Produsen (tabel bahan_baku_produsens) ===================
+    // Produsen memilih dari bahan baku master (dibuat admin) mana saja yang bisa ia sediakan + harganya.
+    Route::get('/produsen/bahan-baku', [BahanBakuProdusenController::class, 'index'])->name('produsen.bahan-baku.index');
+    Route::get('/produsen/bahan-baku/create', [BahanBakuProdusenController::class, 'create'])->name('produsen.bahan-baku.create');
+    Route::post('/produsen/bahan-baku', [BahanBakuProdusenController::class, 'store'])->name('produsen.bahan-baku.store');
+    Route::get('/produsen/bahan-baku/{bahanBakuProdusen}/edit', [BahanBakuProdusenController::class, 'edit'])->name('produsen.bahan-baku.edit');
+    Route::put('/produsen/bahan-baku/{bahanBakuProdusen}', [BahanBakuProdusenController::class, 'update'])->name('produsen.bahan-baku.update');
+    Route::delete('/produsen/bahan-baku/{bahanBakuProdusen}', [BahanBakuProdusenController::class, 'destroy'])->name('produsen.bahan-baku.destroy');
 });

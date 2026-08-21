@@ -77,15 +77,12 @@
                     </a>
                 </li>
 
-                {{-- TODO: sesuaikan nama route saat controller Bahan Baku sudah dibuat --}}
-                {{--
                 <li class="nav-item {{ request()->routeIs('bahan-baku.*') ? 'active' : '' }}">
                     <a href="{{ route('bahan-baku.index') }}">
                         <i class="fas fa-boxes"></i>
                         <p>Bahan Baku</p>
                     </a>
                 </li>
-                --}}
 
                 <li class="nav-section">
                     <span class="sidebar-mini-icon">
@@ -200,6 +197,13 @@
                         <i class="fa fa-ellipsis-h"></i>
                     </span>
                     <h4 class="text-section">Pasokan</h4>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('produsen.bahan-baku.*') ? 'active' : '' }}">
+                    <a href="{{ route('produsen.bahan-baku.index') }}">
+                        <i class="fas fa-boxes"></i>
+                        <p>Bahan Baku Saya</p>
+                    </a>
                 </li>
 
                 {{--
