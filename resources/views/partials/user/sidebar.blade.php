@@ -91,7 +91,6 @@
                     <h4 class="text-section">Transaksi</h4>
                 </li>
 
-                {{--
                 <li class="nav-item {{ request()->routeIs('permintaan-bahan-baku.*') ? 'active' : '' }}">
                     <a href="{{ route('permintaan-bahan-baku.index') }}">
                         <i class="fas fa-file-signature"></i>
@@ -99,6 +98,7 @@
                     </a>
                 </li>
 
+                {{--
                 <li class="nav-item {{ request()->routeIs('penerimaan-bahan-baku.*') ? 'active' : '' }}">
                     <a href="{{ route('penerimaan-bahan-baku.index') }}">
                         <i class="fas fa-truck-loading"></i>

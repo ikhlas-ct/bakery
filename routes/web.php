@@ -9,6 +9,7 @@ use App\Http\Controllers\KategoriBarangController;
 use App\Http\Controllers\SatuanController;
 use App\Http\Controllers\BahanBakuController;
 use App\Http\Controllers\BahanBakuProdusenController;
+use App\Http\Controllers\PermintaanBahanBakuController;
 use Illuminate\Support\Facades\Route;
 
 // =================== Auth Routes ===================
@@ -83,6 +84,23 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/bahan-baku/{bahanBaku}/edit', [BahanBakuController::class, 'edit'])->name('bahan-baku.edit');
     Route::put('/bahan-baku/{bahanBaku}', [BahanBakuController::class, 'update'])->name('bahan-baku.update');
     Route::delete('/bahan-baku/{bahanBaku}', [BahanBakuController::class, 'destroy'])->name('bahan-baku.destroy');
+});
+
+// =================== Transaksi (dikelola oleh Admin saja) ===================
+Route::middleware(['auth', 'role:admin'])->group(function () {
+
+    // Endpoint AJAX: ambil produsen (+harga) yang memasok sebuah bahan baku.
+    // Dipakai oleh dropdown produsen dinamis di form Permintaan Bahan Baku.
+    Route::get('/bahan-baku/{bahanBaku}/produsens', [PermintaanBahanBakuController::class, 'produsenByBahanBaku'])->name('bahan-baku.produsens');
+
+    // ── CRUD Permintaan Bahan Baku (tanpa create-only show; edit sekaligus kelola item pending) ──
+    Route::get('/permintaan-bahan-baku', [PermintaanBahanBakuController::class, 'index'])->name('permintaan-bahan-baku.index');
+    Route::get('/permintaan-bahan-baku/create', [PermintaanBahanBakuController::class, 'create'])->name('permintaan-bahan-baku.create');
+    Route::post('/permintaan-bahan-baku', [PermintaanBahanBakuController::class, 'store'])->name('permintaan-bahan-baku.store');
+    Route::get('/permintaan-bahan-baku/{permintaanBahanBaku}', [PermintaanBahanBakuController::class, 'show'])->name('permintaan-bahan-baku.show');
+    Route::get('/permintaan-bahan-baku/{permintaanBahanBaku}/edit', [PermintaanBahanBakuController::class, 'edit'])->name('permintaan-bahan-baku.edit');
+    Route::put('/permintaan-bahan-baku/{permintaanBahanBaku}', [PermintaanBahanBakuController::class, 'update'])->name('permintaan-bahan-baku.update');
+    Route::delete('/permintaan-bahan-baku/{permintaanBahanBaku}', [PermintaanBahanBakuController::class, 'destroy'])->name('permintaan-bahan-baku.destroy');
 });
 
 Route::middleware(['auth', 'role:produsen'])->group(function () {
