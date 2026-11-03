@@ -10,6 +10,7 @@ use App\Http\Controllers\SatuanController;
 use App\Http\Controllers\BahanBakuController;
 use App\Http\Controllers\BahanBakuProdusenController;
 use App\Http\Controllers\PermintaanBahanBakuController;
+use App\Http\Controllers\PermintaanMasukController;
 use Illuminate\Support\Facades\Route;
 
 // =================== Auth Routes ===================
@@ -118,4 +119,11 @@ Route::middleware(['auth', 'role:produsen'])->group(function () {
     Route::get('/produsen/bahan-baku/{bahanBakuProdusen}/edit', [BahanBakuProdusenController::class, 'edit'])->name('produsen.bahan-baku.edit');
     Route::put('/produsen/bahan-baku/{bahanBakuProdusen}', [BahanBakuProdusenController::class, 'update'])->name('produsen.bahan-baku.update');
     Route::delete('/produsen/bahan-baku/{bahanBakuProdusen}', [BahanBakuProdusenController::class, 'destroy'])->name('produsen.bahan-baku.destroy');
+
+    // =================== Permintaan Bahan Baku Masuk (dari Admin ke Produsen) ===================
+    // Produsen melihat permintaan yang ditujukan kepadanya, lalu mengisi jumlah yang sanggup disediakan.
+    // Jika jumlah kurang dari yang diminta (atau ditolak), kekurangan otomatis memicu data pengalihan.
+    Route::get('/produsen/permintaan', [PermintaanMasukController::class, 'index'])->name('produsen.permintaan.index');
+    Route::get('/produsen/permintaan/{permintaanBahanBaku}', [PermintaanMasukController::class, 'show'])->name('produsen.permintaan.show');
+    Route::put('/produsen/permintaan/{permintaanBahanBaku}', [PermintaanMasukController::class, 'respon'])->name('produsen.permintaan.respon');
 });

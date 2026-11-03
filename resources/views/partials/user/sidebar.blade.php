@@ -206,14 +206,12 @@
                     </a>
                 </li>
 
-                {{--
-                <li class="nav-item {{ request()->routeIs('permintaan-bahan-baku.*') ? 'active' : '' }}">
-                    <a href="{{ route('permintaan-bahan-baku.index') }}">
-                        <i class="fas fa-file-signature"></i>
+                <li class="nav-item {{ request()->routeIs('produsen.permintaan.*') ? 'active' : '' }}">
+                    <a href="{{ route('produsen.permintaan.index') }}">
+                        <i class="fas fa-inbox"></i>
                         <p>Permintaan Masuk</p>
                     </a>
                 </li>
-                --}}
             @endif
 
             <!-- Logout -->
