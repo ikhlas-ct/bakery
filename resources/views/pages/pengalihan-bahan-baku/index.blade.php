@@ -1,0 +1,289 @@
+@extends('layouts.user.user')
+
+@section('title', 'Pengalihan Bahan Baku')
+
+@section('styles')
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body, .card, .table, .btn, h4, h5 { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+    .stat-card { border: none; border-radius: 16px; padding: 20px; position: relative; overflow: hidden; transition: transform .2s ease, box-shadow .2s ease; box-shadow: 0 2px 12px rgba(0,0,0,.07); }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+    .stat-card::after { content: ''; position: absolute; right: -18px; top: -18px; width: 80px; height: 80px; border-radius: 50%; opacity: .12; }
+    .stat-card.orange { background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); } .stat-card.orange::after { background: #ea580c; }
+    .stat-card.green  { background: linear-gradient(135deg, #e6f9f0 0%, #d1fae5 100%); } .stat-card.green::after  { background: #16a34a; }
+    .stat-card.blue   { background: linear-gradient(135deg, #e8f0fe 0%, #dbeafe 100%); } .stat-card.blue::after   { background: #1a73e8; }
+    .stat-card.red    { background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); } .stat-card.red::after    { background: #dc2626; }
+    .stat-card.slate  { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); } .stat-card.slate::after  { background: #64748b; }
+    .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.25rem; flex-shrink: 0; color: #fff; }
+    .stat-icon.orange { background: #ea580c; } .stat-icon.green { background: #16a34a; } .stat-icon.blue { background: #1a73e8; } .stat-icon.red { background: #dc2626; } .stat-icon.slate { background: #64748b; }
+    .stat-value { font-size: 1.85rem; font-weight: 800; line-height: 1; color: #1e293b; }
+    .stat-label { font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: #64748b; margin-top: 3px; }
+
+    .ph-card { background: #fff; border: 1px solid #e9ecef; border-radius: 14px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 1.25rem; position: relative; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,.05); }
+    .ph-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 14px 0 0 14px; background: #1a73e8; }
+    .ph-left { display: flex; align-items: center; gap: 12px; }
+    .ph-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; background: #dbeafe; color: #1a73e8; }
+    .ph-title { font-size: 1.15rem; font-weight: 800; color: #1e293b; margin: 0; }
+    .ph-breadcrumb { list-style: none; display: flex; gap: 6px; padding: 0; margin: 2px 0 0; }
+    .ph-breadcrumb li:not(:last-child)::after { content: '/'; margin-left: 6px; color: #cbd5e1; }
+    .ph-breadcrumb a { color: #1a73e8; text-decoration: none; font-size: .78rem; }
+    .ph-breadcrumb .bc-active { font-size: .78rem; color: #94a3b8; }
+
+    .section-divider { background: #f8f9fa; border-left: 4px solid #1a73e8; padding: 8px 14px; border-radius: 0 6px 6px 0; font-weight: 600; font-size: .9rem; color: #1a73e8; margin-bottom: 1rem; }
+    .info-label { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #94a3b8; }
+    .info-value { font-size: .9rem; font-weight: 600; color: #1e293b; }
+    .required-mark { color: #dc3545; }
+    label { font-size: .875rem; font-weight: 500; }
+
+    .filter-card { border: none; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.07); overflow: hidden; }
+    .filter-card .card-header { background: #fff; border-bottom: 1px solid #f1f5f9; padding: 18px 24px; }
+    .filter-card .card-header h5 { font-size: .95rem; font-weight: 700; color: #1e293b; }
+    .filter-section { background: #fafbfc; border-bottom: 1px solid #f1f5f9; padding: 16px 24px; }
+
+    .form-control, .form-select { border-radius: 10px; border: 1.5px solid #e2e8f0; font-size: .85rem; padding: 8px 12px; color: #334155; background-color: #f8fafc; transition: border-color .2s, box-shadow .2s; }
+    .form-control:focus, .form-select:focus { border-color: #1a73e8; background: #fff; box-shadow: 0 0 0 3px rgba(26,115,232,.12); }
+    .form-control::placeholder { color: #94a3b8; }
+
+    .table { font-size: .83rem; margin-bottom: 0; }
+    .table thead th { background: #f8fafc; color: #475569; font-weight: 700; font-size: .72rem; text-transform: uppercase; letter-spacing: .4px; border-bottom: 1.5px solid #eef2f6; padding: 12px 16px; white-space: nowrap; }
+    .table tbody td { padding: 12px 16px; vertical-align: middle; border-bottom: 1px solid #f4f6f8; }
+    .table tbody tr:hover { background: #fafbfc; }
+    .name-text { font-weight: 700; color: #1e293b; font-size: .85rem; }
+    .sub-text { color: #94a3b8; font-size: .74rem; }
+
+    .badge-kode { background: #eef2ff; color: #4338ca; font-weight: 600; font-size: .72rem; padding: 5px 10px; border-radius: 8px; }
+    .chip { font-weight: 600; font-size: .72rem; padding: 5px 10px; border-radius: 8px; display: inline-block; }
+    .chip-belum     { background: #f1f5f9; color: #475569; }
+    .chip-pending   { background: #fff7ed; color: #c2410c; }
+    .chip-disetujui { background: #f0fdf4; color: #166534; }
+    .chip-sebagian  { background: #eff6ff; color: #1d4ed8; }
+    .chip-ditolak   { background: #fef2f2; color: #dc2626; }
+
+    .btn-action { width: 32px; height: 32px; border-radius: 8px; border: none; display: inline-flex; align-items: center; justify-content: center; font-size: .78rem; transition: all .15s; }
+    .btn-lihat { background: #eff6ff; color: #1d4ed8; } .btn-lihat:hover { background: #1d4ed8; color: #fff; }
+    .btn-edit  { background: #fff7ed; color: #c2410c; } .btn-edit:hover  { background: #c2410c; color: #fff; }
+    .btn-hapus { background: #fef2f2; color: #dc2626; } .btn-hapus:hover { background: #dc2626; color: #fff; }
+    .btn-mini { font-size: .7rem; font-weight: 600; padding: 3px 10px; border-radius: 8px; }
+
+    .empty-state { padding: 48px 24px; }
+    .empty-state-icon { width: 64px; height: 64px; border-radius: 16px; background: #f1f5f9; color: #94a3b8; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 16px; }
+
+    .alert { border-radius: 12px; border: none; font-size: .85rem; }
+    .alert-success { background: #dcfce7; color: #166534; }
+    .alert-danger  { background: #fee2e2; color: #991b1b; }
+    .alert-warning { background: #fff7ed; color: #9a3412; }
+</style>
+@endsection
+
+@section('content')
+    @php
+        $fmt = fn ($n) => rtrim(rtrim(number_format((float) $n, 2, ',', '.'), '0'), ',');
+    @endphp
+    <div class="container">
+
+        <div class="ph-card mb-4">
+            <div class="ph-left">
+                <div class="ph-icon"><i class="fas fa-random"></i></div>
+                <div>
+                    <h5 class="ph-title">Pengalihan Bahan Baku</h5>
+                    <ol class="ph-breadcrumb mb-0">
+                        <li><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                        <li><span class="bc-active">Pengalihan Bahan Baku</span></li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        @if (session('success'))
+            <div class="alert alert-success d-flex align-items-center mb-3 gap-2"><i class="fas fa-check-circle"></i> {{ session('success') }}</div>
+        @endif
+        @if (session('error'))
+            <div class="alert alert-danger d-flex align-items-center mb-3 gap-2"><i class="fas fa-exclamation-circle"></i> {{ session('error') }}</div>
+        @endif
+
+        {{-- Stat cards --}}
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="stat-card slate"><div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon slate"><i class="fas fa-user-clock"></i></div>
+                    <div><div class="stat-value">{{ $totalBelum }}</div><div class="stat-label">Belum Ditentukan</div></div>
+                </div></div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card orange"><div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon orange"><i class="fas fa-hourglass-half"></i></div>
+                    <div><div class="stat-value">{{ $totalMenunggu }}</div><div class="stat-label">Menunggu Respon</div></div>
+                </div></div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card green"><div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon green"><i class="fas fa-check"></i></div>
+                    <div><div class="stat-value">{{ $totalSelesai }}</div><div class="stat-label">Disetujui</div></div>
+                </div></div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card red"><div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon red"><i class="fas fa-times"></i></div>
+                    <div><div class="stat-value">{{ $totalDitolak }}</div><div class="stat-label">Ditolak</div></div>
+                </div></div>
+            </div>
+        </div>
+
+        <div class="card filter-card">
+            <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <h5 class="mb-0"><i class="fas fa-list text-primary me-2"></i>Daftar Pengalihan</h5>
+                <span class="text-muted" style="font-size:.78rem;">{{ $pengalihans->total() }} data ditemukan</span>
+            </div>
+
+            <div class="filter-section">
+                <form method="GET" action="{{ route('pengalihan-bahan-baku.index') }}" class="row g-2 align-items-end">
+                    <div class="col-md-5 col-sm-6">
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text border-end-0 bg-white" style="border-radius:10px 0 0 10px;border:1.5px solid #e2e8f0;">
+                                <i class="fas fa-search text-muted" style="font-size:.75rem;"></i>
+                            </span>
+                            <input type="text" name="search" class="form-control border-start-0 ps-0" style="border-radius:0 10px 10px 0;"
+                                placeholder="Cari nomor transaksi atau bahan baku…" value="{{ request('search') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6">
+                        <select name="status" class="form-select form-select-sm">
+                            <option value="">Semua Status</option>
+                            <option value="belum" @selected(request('status') === 'belum')>Belum Ditentukan</option>
+                            <option value="pending" @selected(request('status') === 'pending')>Menunggu Respon</option>
+                            <option value="disetujui" @selected(request('status') === 'disetujui')>Disetujui</option>
+                            <option value="disetujui_sebagian" @selected(request('status') === 'disetujui_sebagian')>Disetujui Sebagian</option>
+                            <option value="ditolak" @selected(request('status') === 'ditolak')>Ditolak</option>
+                        </select>
+                    </div>
+                    <div class="col-md-auto d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm px-3"><i class="fas fa-filter me-1"></i> Cari</button>
+                        @if (request()->hasAny(['search', 'status']))
+                            <a href="{{ route('pengalihan-bahan-baku.index') }}" class="btn btn-outline-secondary btn-sm px-3"><i class="fas fa-times me-1"></i> Reset</a>
+                        @endif
+                    </div>
+                </form>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th width="40">#</th>
+                            <th>Permintaan Asal</th>
+                            <th>Dialihkan</th>
+                            <th>Pengganti</th>
+                            <th>Status</th>
+                            <th width="130">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($pengalihans as $i => $p)
+                            @php
+                                $detail = $p->permintaanBahanBakuDetail;
+                                $satuan = $p->bahanBakuAsal->satuan->nama ?? '';
+                                $belum  = is_null($p->produsen_pengganti_id);
+                                [$cls, $label] = $belum
+                                    ? ['chip-belum', 'Belum Ditentukan']
+                                    : [
+                                        'pending'            => ['chip-pending',   'Menunggu Respon'],
+                                        'disetujui'          => ['chip-disetujui', 'Disetujui'],
+                                        'disetujui_sebagian' => ['chip-sebagian',  'Disetujui Sebagian'],
+                                        'ditolak'            => ['chip-ditolak',   'Ditolak'],
+                                    ][$p->status_produsen_pengganti];
+                                $bisaUbah = in_array($p->status_produsen_pengganti, ['pending', 'ditolak'], true);
+                            @endphp
+                            <tr>
+                                <td class="text-muted">{{ $pengalihans->firstItem() + $i }}</td>
+                                <td>
+                                    <span class="badge-kode">{{ $detail->permintaanBahanBaku->nomor_transaksi }}</span>
+                                    <div class="name-text mt-1">{{ $p->bahanBakuAsal->nama_bahan_baku }}</div>
+                                    <div class="sub-text">Produsen: {{ $detail->produsen->nama_produsen ?? '-' }}</div>
+                                </td>
+                                <td>
+                                    <div class="name-text">{{ $fmt($p->jumlah_dialihkan) }} {{ $satuan }}</div>
+                                    <div class="sub-text">{{ $p->tanggal->translatedFormat('d M Y') }}</div>
+                                </td>
+                                <td>
+                                    @if ($belum)
+                                        <span class="text-muted">—</span>
+                                    @else
+                                        <div class="name-text">{{ $p->produsenPengganti->nama_produsen ?? '-' }}</div>
+                                        <div class="sub-text">
+                                            {{ $p->bahan_baku_pengganti_id ? $p->bahanBakuPengganti->nama_bahan_baku : 'Bahan baku sama' }}
+                                        </div>
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="chip {{ $cls }}">{{ $label }}</span>
+                                    @if (in_array($p->status_produsen_pengganti, ['disetujui', 'disetujui_sebagian'], true))
+                                        <div class="sub-text mt-1">Disetujui: {{ $fmt($p->jumlah_disetujui_pengganti) }} {{ $satuan }}</div>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        <a href="{{ route('pengalihan-bahan-baku.show', $p->id) }}" class="btn btn-action btn-lihat" title="Detail">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        @if ($bisaUbah)
+                                            <a href="{{ route('pengalihan-bahan-baku.edit', $p->id) }}" class="btn btn-action btn-edit"
+                                                title="{{ $belum ? 'Tentukan pengganti' : 'Ubah pengganti' }}">
+                                                <i class="fas fa-pencil-alt"></i>
+                                            </a>
+                                        @endif
+                                        @if ($p->status_produsen_pengganti === 'pending')
+                                            <button class="btn btn-action btn-hapus" data-id="{{ $p->id }}"
+                                                data-nama="{{ $p->bahanBakuAsal->nama_bahan_baku }}" title="Hapus">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                            <form id="form-hapus-{{ $p->id }}" action="{{ route('pengalihan-bahan-baku.destroy', $p->id) }}"
+                                                method="POST" class="d-none">@csrf @method('DELETE')</form>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="6" class="p-0 text-center">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon"><i class="fas fa-random"></i></div>
+                                        <div class="fw-semibold text-secondary mb-1">Belum ada pengalihan</div>
+                                        <div class="text-muted" style="font-size:.8rem;">Muncul otomatis saat produsen hanya menyetujui sebagian atau menolak permintaan</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if ($pengalihans->hasPages())
+                <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <small class="text-muted">
+                        Menampilkan <strong>{{ $pengalihans->firstItem() }}</strong>–<strong>{{ $pengalihans->lastItem() }}</strong>
+                        dari <strong>{{ $pengalihans->total() }}</strong> data
+                    </small>
+                    {{ $pengalihans->links() }}
+                </div>
+            @endif
+        </div>
+    </div>
+@endsection
+
+@section('scripts')
+    <script>
+        document.querySelectorAll('.btn-hapus').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const id = this.dataset.id, nama = this.dataset.nama;
+                swal({
+                    title: 'Hapus Data?',
+                    text: `Pengalihan "${nama}" akan dihapus permanen.`,
+                    icon: 'warning',
+                    buttons: { cancel: 'Batal', confirm: { text: 'Ya, Hapus!', className: 'btn-danger' } },
+                    dangerMode: true,
+                }).then(ok => { if (ok) document.getElementById('form-hapus-' + id).submit(); });
+            });
+        });
+    </script>
+@endsection

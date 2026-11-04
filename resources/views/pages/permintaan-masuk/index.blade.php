@@ -159,7 +159,7 @@
 
             <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
                 <h5 class="mb-0"><i class="fas fa-list text-primary me-2"></i>Daftar Permintaan</h5>
-                <span class="text-muted" style="font-size:.78rem;">{{ $permintaans->total() }} permintaan ditemukan</span>
+                <span class="text-muted" style="font-size:.78rem;">{{ $rows->total() }} permintaan ditemukan</span>
             </div>
 
             {{-- Filter --}}
@@ -212,45 +212,37 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($permintaans as $i => $permintaan)
-                            @php
-                                $items   = $permintaan->permintaanBahanBakuDetails;
-                                $pending = $items->where('status_produsen', 'pending')->count();
-                            @endphp
+                        @forelse ($rows as $i => $row)
                             <tr>
-                                <td class="text-muted">{{ $permintaans->firstItem() + $i }}</td>
+                                <td class="text-muted">{{ $rows->firstItem() + $i }}</td>
                                 <td>
-                                    <span class="badge-kode">{{ $permintaan->nomor_transaksi }}</span>
-                                    <div class="sub-text mt-1">
-                                        Dari: {{ $permintaan->admin->user->username ?? '-' }}
-                                    </div>
+                                    <span class="badge-kode">{{ $row->nomor }}</span>
+                                    <div class="sub-text mt-1">Dari: {{ $row->dari }}</div>
                                 </td>
-                                <td>{{ $permintaan->tanggal_permintaan->translatedFormat('d M Y') }}</td>
+                                <td>{{ $row->tanggal->translatedFormat('d M Y') }}</td>
                                 <td>
-                                    <div class="name-text">{{ $items->count() }} item</div>
-                                    <div class="sub-text">
-                                        {{ $items->pluck('bahanBaku.nama_bahan_baku')->take(2)->implode(', ') }}{{ $items->count() > 2 ? ', …' : '' }}
-                                    </div>
+                                    <div class="name-text">{{ $row->jumlahItem }} item</div>
+                                    <div class="sub-text">{{ $row->ringkasan }}</div>
                                 </td>
                                 <td>
-                                    @if ($n = $items->where('status_produsen', 'pending')->count())
-                                        <span class="chip chip-pending">{{ $n }} menunggu</span>
+                                    @if ($row->pending)
+                                        <span class="chip chip-pending">{{ $row->pending }} menunggu</span>
                                     @endif
-                                    @if ($n = $items->where('status_produsen', 'disetujui')->count())
-                                        <span class="chip chip-disetujui">{{ $n }} disetujui</span>
+                                    @if ($row->disetujui)
+                                        <span class="chip chip-disetujui">{{ $row->disetujui }} disetujui</span>
                                     @endif
-                                    @if ($n = $items->where('status_produsen', 'disetujui_sebagian')->count())
-                                        <span class="chip chip-sebagian">{{ $n }} sebagian</span>
+                                    @if ($row->sebagian)
+                                        <span class="chip chip-sebagian">{{ $row->sebagian }} sebagian</span>
                                     @endif
-                                    @if ($n = $items->where('status_produsen', 'ditolak')->count())
-                                        <span class="chip chip-ditolak">{{ $n }} ditolak</span>
+                                    @if ($row->ditolak)
+                                        <span class="chip chip-ditolak">{{ $row->ditolak }} ditolak</span>
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('produsen.permintaan.show', $permintaan->id) }}"
-                                        class="btn btn-tanggapi {{ $pending ? 'btn-primary' : 'btn-outline-secondary' }}">
-                                        <i class="fas {{ $pending ? 'fa-reply' : 'fa-eye' }} me-1"></i>
-                                        {{ $pending ? 'Tanggapi' : 'Lihat' }}
+                                    <a href="{{ $row->url }}"
+                                        class="btn btn-tanggapi {{ $row->pending ? 'btn-primary' : 'btn-outline-secondary' }}">
+                                        <i class="fas {{ $row->pending ? 'fa-reply' : 'fa-eye' }} me-1"></i>
+                                        {{ $row->pending ? 'Tanggapi' : 'Lihat' }}
                                     </a>
                                 </td>
                             </tr>
@@ -272,13 +264,13 @@
             </div>
 
             {{-- Pagination --}}
-            @if ($permintaans->hasPages())
+            @if ($rows->hasPages())
                 <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <small class="text-muted">
-                        Menampilkan <strong>{{ $permintaans->firstItem() }}</strong>–<strong>{{ $permintaans->lastItem() }}</strong>
-                        dari <strong>{{ $permintaans->total() }}</strong> data
+                        Menampilkan <strong>{{ $rows->firstItem() }}</strong>–<strong>{{ $rows->lastItem() }}</strong>
+                        dari <strong>{{ $rows->total() }}</strong> data
                     </small>
-                    {{ $permintaans->links() }}
+                    {{ $rows->links() }}
                 </div>
             @endif
 

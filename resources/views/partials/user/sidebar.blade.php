@@ -98,7 +98,13 @@
                     </a>
                 </li>
 
-                {{--
+                <li class="nav-item {{ request()->routeIs('pengalihan-bahan-baku.*') ? 'active' : '' }}">
+                    <a href="{{ route('pengalihan-bahan-baku.index') }}">
+                        <i class="fas fa-random"></i>
+                        <p>Pengalihan Bahan Baku</p>
+                    </a>
+                </li>
+
                 <li class="nav-item {{ request()->routeIs('penerimaan-bahan-baku.*') ? 'active' : '' }}">
                     <a href="{{ route('penerimaan-bahan-baku.index') }}">
                         <i class="fas fa-truck-loading"></i>
@@ -106,17 +112,11 @@
                     </a>
                 </li>
 
+                {{--
                 <li class="nav-item {{ request()->routeIs('pemakaian-bahan-baku.*') ? 'active' : '' }}">
                     <a href="{{ route('pemakaian-bahan-baku.index') }}">
                         <i class="fas fa-utensils"></i>
                         <p>Pemakaian Bahan Baku</p>
-                    </a>
-                </li>
-
-                <li class="nav-item {{ request()->routeIs('pengalihan-bahan-baku.*') ? 'active' : '' }}">
-                    <a href="{{ route('pengalihan-bahan-baku.index') }}">
-                        <i class="fas fa-random"></i>
-                        <p>Pengalihan Bahan Baku</p>
                     </a>
                 </li>
                 --}}
@@ -210,6 +210,13 @@
                     <a href="{{ route('produsen.permintaan.index') }}">
                         <i class="fas fa-inbox"></i>
                         <p>Permintaan Masuk</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('produsen.permintaan-tambahan.*') ? 'active' : '' }}">
+                    <a href="{{ route('produsen.permintaan-tambahan.index') }}">
+                        <i class="fas fa-plus-square"></i>
+                        <p>Permintaan Tambahan</p>
                     </a>
                 </li>
             @endif

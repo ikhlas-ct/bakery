@@ -18,6 +18,7 @@ class PengalihanBahanBaku extends Model
         'bahan_baku_pengganti_id',
         'produsen_pengganti_id',
         'jumlah_dialihkan',
+        'harga_satuan',
         'status_produsen_pengganti',
         'jumlah_disetujui_pengganti',
         'alasan_pengalihan',
@@ -26,6 +27,7 @@ class PengalihanBahanBaku extends Model
 
     protected $casts = [
         'jumlah_dialihkan' => 'decimal:2',
+        'harga_satuan' => 'decimal:2',
         'jumlah_disetujui_pengganti' => 'decimal:2',
         'tanggal' => 'date',
     ];
@@ -48,5 +50,18 @@ class PengalihanBahanBaku extends Model
     public function produsenPengganti(): BelongsTo
     {
         return $this->belongsTo(Produsen::class, 'produsen_pengganti_id');
+    }
+
+    /**
+     * Bahan baku yang sebenarnya akan dikirim/diterima:
+     * bahan baku pengganti bila ada, jika tidak (null) berarti bahan baku asal
+     * yang sama tetapi dipasok produsen lain.
+     * Eager load bahanBakuAsal dan bahanBakuPengganti agar tidak N+1.
+     */
+    public function getBahanBakuTujuanAttribute(): ?BahanBaku
+    {
+        return $this->bahan_baku_pengganti_id
+            ? $this->bahanBakuPengganti
+            : $this->bahanBakuAsal;
     }
 }

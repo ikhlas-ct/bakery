@@ -11,6 +11,9 @@ use App\Http\Controllers\BahanBakuController;
 use App\Http\Controllers\BahanBakuProdusenController;
 use App\Http\Controllers\PermintaanBahanBakuController;
 use App\Http\Controllers\PermintaanMasukController;
+use App\Http\Controllers\PengalihanBahanBakuController;
+use App\Http\Controllers\PenerimaanBahanBakuController;
+use App\Http\Controllers\PermintaanTambahanController;
 use Illuminate\Support\Facades\Route;
 
 // =================== Auth Routes ===================
@@ -102,6 +105,29 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/permintaan-bahan-baku/{permintaanBahanBaku}/edit', [PermintaanBahanBakuController::class, 'edit'])->name('permintaan-bahan-baku.edit');
     Route::put('/permintaan-bahan-baku/{permintaanBahanBaku}', [PermintaanBahanBakuController::class, 'update'])->name('permintaan-bahan-baku.update');
     Route::delete('/permintaan-bahan-baku/{permintaanBahanBaku}', [PermintaanBahanBakuController::class, 'destroy'])->name('permintaan-bahan-baku.destroy');
+
+    // ── Pengalihan Bahan Baku (baris dibuat otomatis saat produsen menyetujui sebagian/menolak; admin menentukan pengganti) ──
+    Route::get('/pengalihan-bahan-baku', [PengalihanBahanBakuController::class, 'index'])->name('pengalihan-bahan-baku.index');
+    Route::get('/pengalihan-bahan-baku/{pengalihanBahanBaku}', [PengalihanBahanBakuController::class, 'show'])->name('pengalihan-bahan-baku.show');
+    Route::get('/pengalihan-bahan-baku/{pengalihanBahanBaku}/edit', [PengalihanBahanBakuController::class, 'edit'])->name('pengalihan-bahan-baku.edit');
+    Route::put('/pengalihan-bahan-baku/{pengalihanBahanBaku}', [PengalihanBahanBakuController::class, 'update'])->name('pengalihan-bahan-baku.update');
+    Route::delete('/pengalihan-bahan-baku/{pengalihanBahanBaku}', [PengalihanBahanBakuController::class, 'destroy'])->name('pengalihan-bahan-baku.destroy');
+
+    // ── Penerimaan Bahan Baku (admin mencatat barang yang dikirim produsen; stok & tagihan pembayaran ikut diperbarui) ──
+    // Endpoint AJAX: semua item (dari berbagai permintaan) yang disetujui produsen & belum diterima penuh (dipakai form tambah).
+    Route::get('/penerimaan-bahan-baku/produsen/{produsen}/item', [PenerimaanBahanBakuController::class, 'itemProdusen'])->name('penerimaan-bahan-baku.item-produsen');
+
+    Route::get('/penerimaan-bahan-baku', [PenerimaanBahanBakuController::class, 'index'])->name('penerimaan-bahan-baku.index');
+    Route::get('/penerimaan-bahan-baku/create', [PenerimaanBahanBakuController::class, 'create'])->name('penerimaan-bahan-baku.create');
+    Route::post('/penerimaan-bahan-baku', [PenerimaanBahanBakuController::class, 'store'])->name('penerimaan-bahan-baku.store');
+    Route::get('/penerimaan-bahan-baku/{penerimaanBahanBaku}', [PenerimaanBahanBakuController::class, 'show'])->name('penerimaan-bahan-baku.show');
+    Route::get('/penerimaan-bahan-baku/{penerimaanBahanBaku}/edit', [PenerimaanBahanBakuController::class, 'edit'])->name('penerimaan-bahan-baku.edit');
+    Route::put('/penerimaan-bahan-baku/{penerimaanBahanBaku}', [PenerimaanBahanBakuController::class, 'update'])->name('penerimaan-bahan-baku.update');
+    Route::delete('/penerimaan-bahan-baku/{penerimaanBahanBaku}', [PenerimaanBahanBakuController::class, 'destroy'])->name('penerimaan-bahan-baku.destroy');
+
+    // Pembayaran tagihan produsen dari halaman detail penerimaan (admin bisa langsung melunasi / membatalkan pelunasan).
+    Route::post('/penerimaan-bahan-baku/{penerimaanBahanBaku}/bayar', [PenerimaanBahanBakuController::class, 'bayar'])->name('penerimaan-bahan-baku.bayar');
+    Route::post('/penerimaan-bahan-baku/{penerimaanBahanBaku}/batal-bayar', [PenerimaanBahanBakuController::class, 'batalBayar'])->name('penerimaan-bahan-baku.batal-bayar');
 });
 
 Route::middleware(['auth', 'role:produsen'])->group(function () {
@@ -126,4 +152,9 @@ Route::middleware(['auth', 'role:produsen'])->group(function () {
     Route::get('/produsen/permintaan', [PermintaanMasukController::class, 'index'])->name('produsen.permintaan.index');
     Route::get('/produsen/permintaan/{permintaanBahanBaku}', [PermintaanMasukController::class, 'show'])->name('produsen.permintaan.show');
     Route::put('/produsen/permintaan/{permintaanBahanBaku}', [PermintaanMasukController::class, 'respon'])->name('produsen.permintaan.respon');
+
+    // =================== Permintaan Tambahan (produsen pengganti menanggapi) ===================
+    Route::get('/produsen/permintaan-tambahan', [PermintaanTambahanController::class, 'index'])->name('produsen.permintaan-tambahan.index');
+    Route::get('/produsen/permintaan-tambahan/{pengalihanBahanBaku}', [PermintaanTambahanController::class, 'show'])->name('produsen.permintaan-tambahan.show');
+    Route::put('/produsen/permintaan-tambahan/{pengalihanBahanBaku}', [PermintaanTambahanController::class, 'respon'])->name('produsen.permintaan-tambahan.respon');
 });

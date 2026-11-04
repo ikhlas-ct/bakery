@@ -8,6 +8,7 @@ use App\Models\PermintaanBahanBakuDetail;
 use App\Models\Produsen;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -29,20 +30,29 @@ class PermintaanMasukController extends Controller
     private const STATUS = ['pending', 'disetujui', 'disetujui_sebagian', 'ditolak'];
 
     /**
-     * Daftar permintaan (header) yang berisi minimal satu item untuk produsen ini.
+     * Daftar permintaan masuk untuk produsen ini. Berisi dua jenis baris dalam satu daftar:
+     *  - permintaan biasa dari admin (header berisi item untuk produsen ini), dan
+     *  - item yang diteruskan admin ke produsen ini sebagai pengganti
+     *    (tampil sebagai permintaan masuk biasa, tanpa istilah pengalihan).
      */
     public function index(Request $request)
     {
         $produsen = $this->produsenLogin();
+        $status   = in_array($request->status, self::STATUS, true) ? $request->status : null;
+        $search   = trim((string) $request->search);
 
-        // Statistik per item (bukan per header), karena status dinilai per item.
+        // Statistik per item, gabungan permintaan biasa + item yang diteruskan.
         $counts = PermintaanBahanBakuDetail::where('produsen_id', $produsen->id)
-            ->selectRaw('status_produsen, COUNT(*) as total')
+            ->selectRaw('status_produsen as st, COUNT(*) as total')
             ->groupBy('status_produsen')
-            ->pluck('total', 'status_produsen');
+            ->pluck('total', 'st');
+        $countsLanjutan = PengalihanBahanBaku::where('produsen_pengganti_id', $produsen->id)
+            ->selectRaw('status_produsen_pengganti as st, COUNT(*) as total')
+            ->groupBy('status_produsen_pengganti')
+            ->pluck('total', 'st');
+        $hitung = fn (string $st) => (int) ($counts[$st] ?? 0) + (int) ($countsLanjutan[$st] ?? 0);
 
-        $status = in_array($request->status, self::STATUS, true) ? $request->status : null;
-
+        // 1) Permintaan biasa
         $permintaans = PermintaanBahanBaku::query()
             ->whereHas('permintaanBahanBakuDetails', function ($q) use ($produsen, $status) {
                 $q->where('produsen_id', $produsen->id);
@@ -52,25 +62,87 @@ class PermintaanMasukController extends Controller
             })
             ->with([
                 'admin.user',
-                // hanya item milik produsen ini yang dimuat
                 'permintaanBahanBakuDetails' => fn ($q) => $q
                     ->where('produsen_id', $produsen->id)
                     ->with('bahanBaku'),
             ])
-            ->when($request->filled('search'), function ($q) use ($request) {
-                $q->where('nomor_transaksi', 'like', '%' . $request->search . '%');
+            ->when($search !== '', fn ($q) => $q->where('nomor_transaksi', 'like', "%{$search}%"))
+            ->get();
+
+        // 2) Item yang diteruskan admin ke produsen ini
+        $lanjutans = PengalihanBahanBaku::query()
+            ->where('produsen_pengganti_id', $produsen->id)
+            ->with([
+                'permintaanBahanBakuDetail.permintaanBahanBaku.admin.user',
+                'bahanBakuAsal',
+                'bahanBakuPengganti',
+            ])
+            ->when($status, fn ($q) => $q->where('status_produsen_pengganti', $status))
+            ->when($search !== '', function ($q) use ($search) {
+                $q->whereHas('permintaanBahanBakuDetail.permintaanBahanBaku',
+                    fn ($h) => $h->where('nomor_transaksi', 'like', "%{$search}%"));
             })
-            ->latest('tanggal_permintaan')
-            ->latest('id')
-            ->paginate(10)
-            ->withQueryString();
+            ->get();
+
+        $rows = collect();
+
+        foreach ($permintaans as $pm) {
+            $items = $pm->permintaanBahanBakuDetails;
+            $rows->push((object) [
+                'nomor'      => $pm->nomor_transaksi,
+                'tanggal'    => $pm->tanggal_permintaan,
+                'dari'       => $pm->admin->user->username ?? '-',
+                'jumlahItem' => $items->count(),
+                'ringkasan'  => $items->pluck('bahanBaku.nama_bahan_baku')->take(2)->implode(', ')
+                                . ($items->count() > 2 ? ', …' : ''),
+                'pending'    => $items->where('status_produsen', 'pending')->count(),
+                'disetujui'  => $items->where('status_produsen', 'disetujui')->count(),
+                'sebagian'   => $items->where('status_produsen', 'disetujui_sebagian')->count(),
+                'ditolak'    => $items->where('status_produsen', 'ditolak')->count(),
+                'url'        => route('produsen.permintaan.show', $pm->id),
+                'sortId'     => $pm->id,
+            ]);
+        }
+
+        foreach ($lanjutans as $l) {
+            $header = $l->permintaanBahanBakuDetail->permintaanBahanBaku;
+            $st     = $l->status_produsen_pengganti;
+            $rows->push((object) [
+                'nomor'      => $header->nomor_transaksi,
+                'tanggal'    => $l->tanggal,
+                'dari'       => $header->admin->user->username ?? '-',
+                'jumlahItem' => 1,
+                'ringkasan'  => $l->bahan_baku_tujuan->nama_bahan_baku ?? '-',
+                'pending'    => $st === 'pending' ? 1 : 0,
+                'disetujui'  => $st === 'disetujui' ? 1 : 0,
+                'sebagian'   => $st === 'disetujui_sebagian' ? 1 : 0,
+                'ditolak'    => $st === 'ditolak' ? 1 : 0,
+                'url'        => route('produsen.permintaan-tambahan.show', $l->id),
+                'sortId'     => $l->id,
+            ]);
+        }
+
+        // Terbaru di atas, lalu paginasi manual (dua sumber data digabung).
+        $rows = $rows
+            ->sortByDesc(fn ($r) => $r->tanggal->timestamp . str_pad((string) $r->sortId, 10, '0', STR_PAD_LEFT))
+            ->values();
+
+        $perPage = 10;
+        $page    = LengthAwarePaginator::resolveCurrentPage();
+        $paged   = new LengthAwarePaginator(
+            $rows->forPage($page, $perPage)->values(),
+            $rows->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
 
         return view('pages.permintaan-masuk.index', [
-            'permintaans'   => $permintaans,
-            'totalPending'  => (int) ($counts['pending'] ?? 0),
-            'totalSetuju'   => (int) ($counts['disetujui'] ?? 0),
-            'totalSebagian' => (int) ($counts['disetujui_sebagian'] ?? 0),
-            'totalTolak'    => (int) ($counts['ditolak'] ?? 0),
+            'rows'          => $paged,
+            'totalPending'  => $hitung('pending'),
+            'totalSetuju'   => $hitung('disetujui'),
+            'totalSebagian' => $hitung('disetujui_sebagian'),
+            'totalTolak'    => $hitung('ditolak'),
         ]);
     }
 
@@ -85,7 +157,7 @@ class PermintaanMasukController extends Controller
             'admin.user',
             'permintaanBahanBakuDetails' => fn ($q) => $q
                 ->where('produsen_id', $produsen->id)
-                ->with(['bahanBaku.satuan', 'pengalihan'])
+                ->with('bahanBaku.satuan')
                 ->orderBy('id'),
         ]);
 
