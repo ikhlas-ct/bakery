@@ -142,7 +142,7 @@
                         <div class="info-value">{{ $fmt($detail->jumlah_diminta) }} {{ $satuan }}</div></div>
                     <div class="col-4"><div class="info-label">Disetujui</div>
                         <div class="info-value">{{ $fmt($detail->jumlah_disetujui) }} {{ $satuan }}</div></div>
-                    <div class="col-4"><div class="info-label">Kekurangan</div>
+                    <div class="col-4"><div class="info-label">Sisa Kekurangan</div>
                         <div class="info-value text-danger">{{ $fmt($kekurangan) }} {{ $satuan }}</div></div>
                 </div>
             </div></div>
@@ -180,12 +180,9 @@
         <div class="alert alert-warning d-flex align-items-start gap-2 mt-3">
             <i class="fas fa-triangle-exclamation mt-1"></i>
             <div>
-                Masih ada <strong>{{ $fmt($sisaBelumTerpenuhi) }} {{ $satuan }}</strong> yang belum terpenuhi.
-                @if ($p->status_produsen_pengganti === 'ditolak')
-                    Pengganti menolak; Anda bisa memilih pengganti lain lewat tombol <em>Ubah Pengganti</em>.
-                @else
-                    Pengganti hanya menyetujui sebagian; sisanya bisa dibuatkan permintaan baru.
-                @endif
+                Pengganti ini belum memenuhi <strong>{{ $fmt($sisaBelumTerpenuhi) }} {{ $satuan }}</strong>.
+                Sisa tersebut sudah otomatis dibuatkan pengalihan baru; tentukan penggantinya di
+                <a href="{{ route('pengalihan-bahan-baku.index', ['status' => 'belum']) }}">daftar pengalihan</a>.
             </div>
         </div>
     @endif

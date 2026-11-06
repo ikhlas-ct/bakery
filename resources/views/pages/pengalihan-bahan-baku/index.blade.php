@@ -192,7 +192,7 @@
                                         'disetujui_sebagian' => ['chip-sebagian',  'Disetujui Sebagian'],
                                         'ditolak'            => ['chip-ditolak',   'Ditolak'],
                                     ][$p->status_produsen_pengganti];
-                                $bisaUbah = in_array($p->status_produsen_pengganti, ['pending', 'ditolak'], true);
+                                $bisaUbah = $p->status_produsen_pengganti === 'pending';
                             @endphp
                             <tr>
                                 <td class="text-muted">{{ $pengalihans->firstItem() + $i }}</td>

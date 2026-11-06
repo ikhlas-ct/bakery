@@ -20,7 +20,8 @@ use Illuminate\Validation\ValidationException;
  *   (a) bahan baku SAMA ke produsen lain  -> bahan_baku_pengganti_id = NULL
  *   (b) bahan baku PENGGANTI setara       -> bahan_baku_pengganti_id terisi
  * Setelah ditentukan, status_produsen_pengganti = 'pending' menunggu respon
- * produsen pengganti (PermintaanTambahanController).
+ * produsen pengganti (PermintaanTambahanController). Jika pengganti pun kurang,
+ * PermintaanTambahanController membuat baris pengalihan baru (berantai) untuk sisanya.
  */
 class PengalihanBahanBakuController extends Controller
 {
@@ -53,6 +54,18 @@ class PengalihanBahanBakuController extends Controller
                                                        ->where('status_produsen_pengganti', 'pending'))
             ->when(in_array($status, ['disetujui', 'disetujui_sebagian', 'ditolak'], true),
                 fn ($q) => $q->where('status_produsen_pengganti', $status))
+            // Urutan prioritas tindakan admin:
+            // 0 belum ditentukan -> 1 ditolak -> 2 menunggu (pending)
+            // -> 3 disetujui sebagian -> 4 disetujui.
+            // Di dalam tiap kelompok, yang terbaru masuk di atas.
+            ->orderByRaw("CASE
+                    WHEN produsen_pengganti_id IS NULL THEN 0
+                    WHEN status_produsen_pengganti = 'ditolak' THEN 1
+                    WHEN status_produsen_pengganti = 'pending' THEN 2
+                    WHEN status_produsen_pengganti = 'disetujui_sebagian' THEN 3
+                    WHEN status_produsen_pengganti = 'disetujui' THEN 4
+                    ELSE 5
+                END")
             ->latest('id')
             ->paginate(10)
             ->withQueryString();
@@ -90,7 +103,7 @@ class PengalihanBahanBakuController extends Controller
     {
         if (! $this->bisaDiubah($pengalihanBahanBaku)) {
             return redirect()->route('pengalihan-bahan-baku.show', $pengalihanBahanBaku)
-                ->with('error', 'Pengalihan ini sudah disetujui produsen pengganti sehingga tidak bisa diubah.');
+                ->with('error', 'Pengalihan ini sudah ditanggapi produsen pengganti sehingga tidak bisa diubah.');
         }
 
         $pengalihanBahanBaku->load([
@@ -167,7 +180,7 @@ class PengalihanBahanBakuController extends Controller
 
             if (! $this->bisaDiubah($p)) {
                 throw ValidationException::withMessages([
-                    'produsen_pengganti_id' => 'Pengalihan ini sudah disetujui produsen pengganti sehingga tidak bisa diubah.',
+                    'produsen_pengganti_id' => 'Pengalihan ini sudah ditanggapi produsen pengganti sehingga tidak bisa diubah.',
                 ]);
             }
 
@@ -268,21 +281,28 @@ class PengalihanBahanBakuController extends Controller
     }
 
     /**
-     * Kekurangan di item permintaan asal = diminta - disetujui produsen asal.
+     * Sisa kekurangan yang masih harus dipenuhi untuk item permintaan asal:
+     * (diminta - disetujui produsen asal) dikurangi jumlah yang sudah disetujui
+     * produsen pengganti pada pengalihan LAIN untuk item yang sama (rantai pengalihan).
      */
     private function kekurangan(PengalihanBahanBaku $p): float
     {
         $d = $p->permintaanBahanBakuDetail;
 
-        return max(0, (float) $d->jumlah_diminta - (float) ($d->jumlah_disetujui ?? 0));
+        $sudahTerpenuhi = (float) PengalihanBahanBaku::where('permintaan_bahan_baku_detail_id', $d->id)
+            ->where('id', '!=', $p->id)
+            ->sum('jumlah_disetujui_pengganti');
+
+        return max(0, (float) $d->jumlah_diminta - (float) ($d->jumlah_disetujui ?? 0) - $sudahTerpenuhi);
     }
 
     /**
-     * Boleh ditentukan/diubah selama belum disetujui (pending) atau ditolak pengganti
-     * (admin memilih pengganti lain pada baris yang sama).
+     * Hanya baris yang masih 'pending' (belum direspon pengganti) yang bisa ditentukan/diubah.
+     * Baris yang sudah direspon menjadi riwayat; bila pengganti kurang, sistem otomatis
+     * membuat baris pengalihan baru untuk sisanya.
      */
     private function bisaDiubah(PengalihanBahanBaku $p): bool
     {
-        return in_array($p->status_produsen_pengganti, ['pending', 'ditolak'], true);
+        return $p->status_produsen_pengganti === 'pending';
     }
 }

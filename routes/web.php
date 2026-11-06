@@ -14,6 +14,7 @@ use App\Http\Controllers\PermintaanMasukController;
 use App\Http\Controllers\PengalihanBahanBakuController;
 use App\Http\Controllers\PenerimaanBahanBakuController;
 use App\Http\Controllers\PermintaanTambahanController;
+use App\Http\Controllers\LaporanPenerimaanBahanBakuController;
 use Illuminate\Support\Facades\Route;
 
 // =================== Auth Routes ===================
@@ -128,6 +129,13 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     // Pembayaran tagihan produsen dari halaman detail penerimaan (admin bisa langsung melunasi / membatalkan pelunasan).
     Route::post('/penerimaan-bahan-baku/{penerimaanBahanBaku}/bayar', [PenerimaanBahanBakuController::class, 'bayar'])->name('penerimaan-bahan-baku.bayar');
     Route::post('/penerimaan-bahan-baku/{penerimaanBahanBaku}/batal-bayar', [PenerimaanBahanBakuController::class, 'batalBayar'])->name('penerimaan-bahan-baku.batal-bayar');
+});
+
+// =================== Laporan (Admin & Pemilik) ===================
+// Akses dibatasi ke admin & pemilik di dalam controller (authorizeRole), jadi middleware cukup 'auth'.
+Route::middleware(['auth'])->prefix('laporan')->name('laporan.')->group(function () {
+    Route::get('/penerimaan-bahan-baku', [LaporanPenerimaanBahanBakuController::class, 'index'])->name('penerimaan-bahan-baku.index');
+    Route::get('/penerimaan-bahan-baku/cetak', [LaporanPenerimaanBahanBakuController::class, 'cetak'])->name('penerimaan-bahan-baku.cetak');
 });
 
 Route::middleware(['auth', 'role:produsen'])->group(function () {

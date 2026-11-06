@@ -256,17 +256,16 @@ class PermintaanMasukController extends Controller
                             : 'Produsen hanya sanggup menyediakan sebagian dari jumlah yang diminta.';
                     }
 
-                    // 1 item = maksimal 1 pengalihan (relasi hasOne).
-                    PengalihanBahanBaku::updateOrCreate(
-                        ['permintaan_bahan_baku_detail_id' => $detail->id],
-                        [
-                            'bahan_baku_asal_id'        => $detail->bahan_baku_id,
-                            'jumlah_dialihkan'          => $kurang,
-                            'status_produsen_pengganti' => 'pending',
-                            'alasan_pengalihan'         => $alasan,
-                            'tanggal'                   => now()->toDateString(),
-                        ]
-                    );
+                    // Satu item boleh punya beberapa pengalihan berantai (hasMany);
+                    // baris pertama ini dibuat sekali, saat item masih 'pending'.
+                    PengalihanBahanBaku::create([
+                        'permintaan_bahan_baku_detail_id' => $detail->id,
+                        'bahan_baku_asal_id'              => $detail->bahan_baku_id,
+                        'jumlah_dialihkan'                => $kurang,
+                        'status_produsen_pengganti'       => 'pending',
+                        'alasan_pengalihan'               => $alasan,
+                        'tanggal'                         => now()->toDateString(),
+                    ]);
                 }
             }
         });

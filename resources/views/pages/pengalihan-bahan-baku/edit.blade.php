@@ -100,13 +100,6 @@
         <a href="{{ route('pengalihan-bahan-baku.index') }}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i> Kembali</a>
     </div>
 
-    @if ($p->status_produsen_pengganti === 'ditolak')
-        <div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
-            <i class="fas fa-triangle-exclamation"></i>
-            Pengganti sebelumnya menolak. Pilih pengganti lain; menyimpan akan memulai ulang siklus persetujuan.
-        </div>
-    @endif
-
     <div class="row justify-content-center">
         <div class="col-lg-8">
 
@@ -124,7 +117,7 @@
                         <div class="info-value">{{ $fmt($detail->jumlah_diminta) }} {{ $satuan }}</div></div>
                     <div class="col-md-4 col-6"><div class="info-label">Disetujui</div>
                         <div class="info-value">{{ $fmt($detail->jumlah_disetujui) }} {{ $satuan }}</div></div>
-                    <div class="col-md-4 col-6"><div class="info-label">Kekurangan</div>
+                    <div class="col-md-4 col-6"><div class="info-label">Sisa Kekurangan</div>
                         <div class="info-value text-danger">{{ $fmt($kekurangan) }} {{ $satuan }}</div></div>
                 </div>
             </div></div>
@@ -170,7 +163,7 @@
                                 <span class="input-group-text">{{ $satuan }}</span>
                                 @error('jumlah_dialihkan')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
-                            <div class="form-text" style="font-size:.75rem;">Maksimal {{ $fmt($kekurangan) }} {{ $satuan }} (kekurangan).</div>
+                            <div class="form-text" style="font-size:.75rem;">Maksimal {{ $fmt($kekurangan) }} {{ $satuan }} (sisa kekurangan).</div>
                         </div>
 
                         <div class="col-md-6">

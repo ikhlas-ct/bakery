@@ -125,6 +125,20 @@
                     <span class="sidebar-mini-icon">
                         <i class="fa fa-ellipsis-h"></i>
                     </span>
+                    <h4 class="text-section">Laporan</h4>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('laporan.penerimaan-bahan-baku.*') ? 'active' : '' }}">
+                    <a href="{{ route('laporan.penerimaan-bahan-baku.index') }}">
+                        <i class="fas fa-file-alt"></i>
+                        <p>Laporan Penerimaan Barang</p>
+                    </a>
+                </li>
+
+                <li class="nav-section">
+                    <span class="sidebar-mini-icon">
+                        <i class="fa fa-ellipsis-h"></i>
+                    </span>
                     <h4 class="text-section">Pengaturan</h4>
                 </li>
 
@@ -156,6 +170,20 @@
                     <a href="{{ route('pemilik.produsen.index') }}">
                         <i class="fas fa-industry"></i>
                         <p>Data Produsen</p>
+                    </a>
+                </li>
+
+                <li class="nav-section">
+                    <span class="sidebar-mini-icon">
+                        <i class="fa fa-ellipsis-h"></i>
+                    </span>
+                    <h4 class="text-section">Laporan</h4>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('laporan.penerimaan-bahan-baku.*') ? 'active' : '' }}">
+                    <a href="{{ route('laporan.penerimaan-bahan-baku.index') }}">
+                        <i class="fas fa-file-alt"></i>
+                        <p>Laporan Penerimaan Barang</p>
                     </a>
                 </li>
 
@@ -206,17 +234,10 @@
                     </a>
                 </li>
 
-                <li class="nav-item {{ request()->routeIs('produsen.permintaan.*') ? 'active' : '' }}">
+                <li class="nav-item {{ request()->routeIs('produsen.permintaan.*') || request()->routeIs('produsen.permintaan-tambahan.*') ? 'active' : '' }}">
                     <a href="{{ route('produsen.permintaan.index') }}">
                         <i class="fas fa-inbox"></i>
                         <p>Permintaan Masuk</p>
-                    </a>
-                </li>
-
-                <li class="nav-item {{ request()->routeIs('produsen.permintaan-tambahan.*') ? 'active' : '' }}">
-                    <a href="{{ route('produsen.permintaan-tambahan.index') }}">
-                        <i class="fas fa-plus-square"></i>
-                        <p>Permintaan Tambahan</p>
                     </a>
                 </li>
             @endif

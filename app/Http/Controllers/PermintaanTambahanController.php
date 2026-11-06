@@ -76,6 +76,21 @@ class PermintaanTambahanController extends Controller
                 'jumlah_disetujui_pengganti' => $disetujui / 100,
                 'status_produsen_pengganti'  => $status,
             ]);
+
+            // Pengganti pun kurang -> picu pengalihan berikutnya untuk sisa yang belum terpenuhi.
+            // Baris lama tetap sebagai riwayat; admin menentukan pengganti baru di baris yang baru.
+            if ($disetujui < $diminta) {
+                PengalihanBahanBaku::create([
+                    'permintaan_bahan_baku_detail_id' => $p->permintaan_bahan_baku_detail_id,
+                    'bahan_baku_asal_id'              => $p->bahan_baku_asal_id,
+                    'jumlah_dialihkan'                => ($diminta - $disetujui) / 100,
+                    'status_produsen_pengganti'       => 'pending',
+                    'alasan_pengalihan'               => $disetujui === 0
+                        ? 'Produsen pengganti tidak sanggup menyediakan.'
+                        : 'Produsen pengganti hanya sanggup menyediakan sebagian.',
+                    'tanggal'                         => now()->toDateString(),
+                ]);
+            }
         });
 
         return redirect()

@@ -46,11 +46,20 @@ class PermintaanBahanBakuDetail extends Model
     }
 
     /**
-     * Baris pengalihan untuk item ini (jika kekurangan dialihkan).
+     * Semua baris pengalihan untuk item ini. Satu item bisa punya beberapa baris berantai:
+     * bila produsen pengganti juga kurang, dibuat baris baru untuk sisanya.
+     */
+    public function pengalihans(): HasMany
+    {
+        return $this->hasMany(PengalihanBahanBaku::class);
+    }
+
+    /**
+     * Baris pengalihan terbaru (kompatibel dengan kode lama yang memakai ->pengalihan).
      */
     public function pengalihan(): HasOne
     {
-        return $this->hasOne(PengalihanBahanBaku::class);
+        return $this->hasOne(PengalihanBahanBaku::class)->latestOfMany();
     }
 
     public function penerimaanBahanBakuDetails(): HasMany
