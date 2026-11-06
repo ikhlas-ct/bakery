@@ -1,3 +1,18 @@
+<style>
+    /* Ikon menu tidak boleh menyusut saat teks menu panjang (mis. "Laporan Penerimaan Barang"),
+       supaya teks semua menu sejajar. Teks panjang akan turun ke baris berikutnya. */
+    .sidebar .nav-item > a > i,
+    .sidebar-wrapper .nav-item > a > i {
+        flex-shrink: 0 !important;
+    }
+    .sidebar .nav-item > a > p,
+    .sidebar-wrapper .nav-item > a > p {
+        min-width: 0;
+        white-space: normal;
+        line-height: 1.3;
+    }
+</style>
+
 <!-- Sidebar -->
 <div class="sidebar-logo">
     <!-- Logo Header -->
@@ -135,6 +150,13 @@
                     </a>
                 </li>
 
+                <li class="nav-item {{ request()->routeIs('laporan.receipt-pembayaran.*') ? 'active' : '' }}">
+                    <a href="{{ route('laporan.receipt-pembayaran.index') }}">
+                        <i class="fas fa-receipt"></i>
+                        <p>Receipt Pembayaran</p>
+                    </a>
+                </li>
+
                 <li class="nav-section">
                     <span class="sidebar-mini-icon">
                         <i class="fa fa-ellipsis-h"></i>
@@ -184,6 +206,13 @@
                     <a href="{{ route('laporan.penerimaan-bahan-baku.index') }}">
                         <i class="fas fa-file-alt"></i>
                         <p>Laporan Penerimaan Barang</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('laporan.receipt-pembayaran.*') ? 'active' : '' }}">
+                    <a href="{{ route('laporan.receipt-pembayaran.index') }}">
+                        <i class="fas fa-receipt"></i>
+                        <p>Receipt Pembayaran</p>
                     </a>
                 </li>
 

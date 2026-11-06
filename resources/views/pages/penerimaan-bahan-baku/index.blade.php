@@ -127,6 +127,8 @@
         .btn-detail:hover { background: #1a73e8; color: #fff; }
         .btn-edit { background: #fff7ed; color: #c2410c; }
         .btn-edit:hover { background: #c2410c; color: #fff; }
+        .btn-cetak { background: #f0fdf4; color: #16a34a; }
+        .btn-cetak:hover { background: #16a34a; color: #fff; }
         .btn-hapus { background: #fef2f2; color: #dc2626; }
         .btn-hapus:hover { background: #dc2626; color: #fff; }
 
@@ -284,7 +286,7 @@
                             <th>Permintaan</th>
                             <th>Item</th>
                             <th>Pembayaran</th>
-                            <th width="130">Aksi</th>
+                            <th width="150">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -323,7 +325,7 @@
                                     @endforeach
                                 </td>
                                 <td>
-                                    <div class="d-flex gap-1">
+                                    <div class="d-flex flex-wrap gap-1">
                                         <a href="{{ route('penerimaan-bahan-baku.show', $penerimaan->id) }}"
                                             class="btn btn-action btn-detail" title="Detail">
                                             <i class="fas fa-eye"></i>
@@ -332,6 +334,18 @@
                                             class="btn btn-action btn-edit" title="Edit">
                                             <i class="fas fa-pencil-alt"></i>
                                         </a>
+                                        {{-- Satu tombol cetak per penerimaan (receipt gabungan seluruh tagihan lunas) --}}
+                                        @php
+                                            $adaLunas = $permintaanDetails->contains(
+                                                fn ($permintaan) => (($pembayaranMap[$permintaan->id . '-' . $penerimaan->produsen_id] ?? null)?->status_bayar) === 'lunas'
+                                            );
+                                        @endphp
+                                        @if ($adaLunas)
+                                            <a href="{{ route('laporan.receipt-pembayaran.show', ['penerimaan' => $penerimaan->id, 'cetak' => 1]) }}"
+                                                target="_blank" rel="noopener" class="btn btn-action btn-cetak" title="Cetak Receipt">
+                                                <i class="fas fa-print"></i>
+                                            </a>
+                                        @endif
                                         <button class="btn btn-action btn-hapus" data-id="{{ $penerimaan->id }}"
                                             data-nama="{{ $penerimaan->nomor_transaksi }}" title="Hapus">
                                             <i class="fas fa-trash-alt"></i>

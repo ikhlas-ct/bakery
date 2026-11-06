@@ -15,6 +15,7 @@ use App\Http\Controllers\PengalihanBahanBakuController;
 use App\Http\Controllers\PenerimaanBahanBakuController;
 use App\Http\Controllers\PermintaanTambahanController;
 use App\Http\Controllers\LaporanPenerimaanBahanBakuController;
+use App\Http\Controllers\LaporanReceiptPembayaranController;
 use Illuminate\Support\Facades\Route;
 
 // =================== Auth Routes ===================
@@ -136,6 +137,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 Route::middleware(['auth'])->prefix('laporan')->name('laporan.')->group(function () {
     Route::get('/penerimaan-bahan-baku', [LaporanPenerimaanBahanBakuController::class, 'index'])->name('penerimaan-bahan-baku.index');
     Route::get('/penerimaan-bahan-baku/cetak', [LaporanPenerimaanBahanBakuController::class, 'cetak'])->name('penerimaan-bahan-baku.cetak');
+
+    // Receipt Pembayaran (satu receipt per penerimaan, hanya yang lunas).
+    Route::get('/receipt-pembayaran', [LaporanReceiptPembayaranController::class, 'index'])->name('receipt-pembayaran.index');
+    Route::get('/receipt-pembayaran/{penerimaan}', [LaporanReceiptPembayaranController::class, 'show'])->name('receipt-pembayaran.show');
 });
 
 Route::middleware(['auth', 'role:produsen'])->group(function () {

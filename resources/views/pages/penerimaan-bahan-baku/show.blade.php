@@ -69,6 +69,9 @@
     }
     .pay-amount { font-size: 1.15rem; font-weight: 800; color: #1e293b; }
 
+    .btn-cetak-receipt { background: #16a34a; border-color: #16a34a; color: #fff; }
+    .btn-cetak-receipt:hover { background: #15803d; border-color: #15803d; color: #fff; }
+
     .alert { border-radius: 12px; border: none; font-size: .85rem; }
     .alert-success { background: #dcfce7; color: #166534; }
     .alert-danger { background: #fee2e2; color: #991b1b; }
@@ -99,6 +102,16 @@
             </div>
         </div>
         <div class="d-flex gap-2">
+            {{-- Satu receipt untuk seluruh tagihan lunas pada penerimaan ini --}}
+            @php
+                $adaLunas = collect($tagihans)->contains(fn ($t) => ($t['pembayaran']->status_bayar ?? null) === 'lunas');
+            @endphp
+            @if ($adaLunas)
+                <a href="{{ route('laporan.receipt-pembayaran.show', ['penerimaan' => $penerimaan->id, 'cetak' => 1]) }}"
+                    target="_blank" rel="noopener" class="btn btn-cetak-receipt btn-sm">
+                    <i class="fas fa-print me-1"></i> Cetak Receipt
+                </a>
+            @endif
             @unless ($alasanTerkunci)
                 <a href="{{ route('penerimaan-bahan-baku.edit', $penerimaan->id) }}" class="btn btn-warning btn-sm">
                     <i class="fas fa-pencil-alt me-1"></i> Edit
