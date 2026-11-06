@@ -127,14 +127,12 @@
                     </a>
                 </li>
 
-                {{--
                 <li class="nav-item {{ request()->routeIs('pemakaian-bahan-baku.*') ? 'active' : '' }}">
                     <a href="{{ route('pemakaian-bahan-baku.index') }}">
                         <i class="fas fa-utensils"></i>
                         <p>Pemakaian Bahan Baku</p>
                     </a>
                 </li>
-                --}}
 
                 <li class="nav-section">
                     <span class="sidebar-mini-icon">

@@ -13,6 +13,7 @@ use App\Http\Controllers\PermintaanBahanBakuController;
 use App\Http\Controllers\PermintaanMasukController;
 use App\Http\Controllers\PengalihanBahanBakuController;
 use App\Http\Controllers\PenerimaanBahanBakuController;
+use App\Http\Controllers\PemakaianBahanBakuController;
 use App\Http\Controllers\PermintaanTambahanController;
 use App\Http\Controllers\LaporanPenerimaanBahanBakuController;
 use App\Http\Controllers\LaporanReceiptPembayaranController;
@@ -130,6 +131,19 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     // Pembayaran tagihan produsen dari halaman detail penerimaan (admin bisa langsung melunasi / membatalkan pelunasan).
     Route::post('/penerimaan-bahan-baku/{penerimaanBahanBaku}/bayar', [PenerimaanBahanBakuController::class, 'bayar'])->name('penerimaan-bahan-baku.bayar');
     Route::post('/penerimaan-bahan-baku/{penerimaanBahanBaku}/batal-bayar', [PenerimaanBahanBakuController::class, 'batalBayar'])->name('penerimaan-bahan-baku.batal-bayar');
+
+    // ── Pemakaian Bahan Baku (pengeluaran stok gudang oleh admin dengan metode FEFO) ──
+    // Stok diambil otomatis dari batch penerimaan dengan tanggal terima paling lama; stok batch & cache stok bahan baku ikut berkurang.
+    // Endpoint AJAX: daftar batch (urutan FEFO) untuk pratinjau di form. Harus berada SEBELUM route {pemakaianBahanBaku}.
+    Route::get('/pemakaian-bahan-baku/bahan-baku/{bahanBaku}/batch', [PemakaianBahanBakuController::class, 'batch'])->name('pemakaian-bahan-baku.batch');
+
+    Route::get('/pemakaian-bahan-baku', [PemakaianBahanBakuController::class, 'index'])->name('pemakaian-bahan-baku.index');
+    Route::get('/pemakaian-bahan-baku/create', [PemakaianBahanBakuController::class, 'create'])->name('pemakaian-bahan-baku.create');
+    Route::post('/pemakaian-bahan-baku', [PemakaianBahanBakuController::class, 'store'])->name('pemakaian-bahan-baku.store');
+    Route::get('/pemakaian-bahan-baku/{pemakaianBahanBaku}', [PemakaianBahanBakuController::class, 'show'])->name('pemakaian-bahan-baku.show');
+    Route::get('/pemakaian-bahan-baku/{pemakaianBahanBaku}/edit', [PemakaianBahanBakuController::class, 'edit'])->name('pemakaian-bahan-baku.edit');
+    Route::put('/pemakaian-bahan-baku/{pemakaianBahanBaku}', [PemakaianBahanBakuController::class, 'update'])->name('pemakaian-bahan-baku.update');
+    Route::delete('/pemakaian-bahan-baku/{pemakaianBahanBaku}', [PemakaianBahanBakuController::class, 'destroy'])->name('pemakaian-bahan-baku.destroy');
 });
 
 // =================== Laporan (Admin & Pemilik) ===================
