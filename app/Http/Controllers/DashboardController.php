@@ -7,6 +7,7 @@ use App\Models\Pembayaran;
 use App\Models\PenerimaanBahanBakuDetail;
 use App\Models\PengalihanBahanBaku;
 use App\Models\PermintaanBahanBaku;
+use App\Models\PermintaanBahanBakuDetail;
 use App\Models\Produsen;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -128,7 +129,104 @@ class DashboardController extends Controller
 
     public function produsen(Request $request)
     {
-        return view('pages.produsen.dashboard');
+        $produsen = auth()->user()->produsen;
+
+        abort_if(! $produsen, 403, 'Akun ini belum terhubung ke data produsen.');
+
+        $id = $produsen->id;
+        $today = Carbon::today();
+
+        // Filter: item permintaan milik produsen ini yang belum direspon
+        $itemPending = fn ($q) => $q->where('produsen_id', $id)->where('status_produsen', 'pending');
+
+        // ── Kartu statistik ──────────────────────────────────────────────
+        $jumlahBahanBaku = $produsen->bahanBakuProdusens()->count();
+
+        $jumlahPermintaanMenunggu = PermintaanBahanBaku::whereHas('permintaanBahanBakuDetails', $itemPending)->count();
+
+        $jumlahPermintaanTambahan = PengalihanBahanBaku::where('produsen_pengganti_id', $id)
+            ->where('status_produsen_pengganti', 'pending')
+            ->count();
+
+        $belumDibayar = (float) Pembayaran::where('produsen_id', $id)->where('status_bayar', 'belum')->sum('jumlah_bayar');
+        $sudahDibayar = (float) Pembayaran::where('produsen_id', $id)->where('status_bayar', 'lunas')->sum('jumlah_bayar');
+
+        // ── Permintaan masuk yang perlu direspon ─────────────────────────
+        $permintaanMasuk = PermintaanBahanBaku::with([
+            'permintaanBahanBakuDetails' => fn ($q) => $q->where('produsen_id', $id)->with('bahanBaku.satuan'),
+        ])
+            ->whereHas('permintaanBahanBakuDetails', $itemPending)
+            ->latest('tanggal_permintaan')
+            ->latest('id')
+            ->limit(6)
+            ->get()
+            ->each(function ($permintaan) {
+                $details = $permintaan->permintaanBahanBakuDetails;
+
+                $permintaan->total_item  = $details->count();
+                $permintaan->total_nilai = $details->sum(fn ($d) => (float) $d->harga_satuan * (float) $d->jumlah_diminta);
+                $permintaan->nama_bahan  = $details->pluck('bahanBaku.nama_bahan_baku')->filter()->values();
+            });
+
+        // ── Permintaan tambahan (produsen ini ditunjuk sebagai pengganti) ─
+        $permintaanTambahan = PengalihanBahanBaku::with([
+            'permintaanBahanBakuDetail.permintaanBahanBaku',
+            'bahanBakuAsal.satuan',
+            'bahanBakuPengganti.satuan',
+        ])
+            ->where('produsen_pengganti_id', $id)
+            ->where('status_produsen_pengganti', 'pending')
+            ->latest('tanggal')
+            ->latest('id')
+            ->limit(6)
+            ->get();
+
+        // ── Item disetujui yang belum dikirim penuh ──────────────────────
+        $itemDisetujui = PermintaanBahanBakuDetail::with(['permintaanBahanBaku', 'bahanBaku.satuan'])
+            ->withSum('penerimaanBahanBakuDetails as total_diterima', 'jumlah_diterima')
+            ->where('produsen_id', $id)
+            ->whereIn('status_produsen', ['disetujui', 'disetujui_sebagian'])
+            ->latest('id')
+            ->get()
+            ->each(function ($d) {
+                $disetujui = (float) ($d->jumlah_disetujui ?? $d->jumlah_diminta);
+                $d->sisa_kirim = max(0, $disetujui - (float) $d->total_diterima);
+                $d->jumlah_final = $disetujui;
+            })
+            ->filter(fn ($d) => $d->sisa_kirim > 0)
+            ->values();
+
+        $jumlahMenungguPengiriman = $itemDisetujui->count();
+        $menungguPengiriman = $itemDisetujui->take(6);
+
+        // ── Pembayaran terbaru ───────────────────────────────────────────
+        $pembayaranTerbaru = Pembayaran::with('permintaanBahanBaku')
+            ->where('produsen_id', $id)
+            ->latest('id')
+            ->limit(6)
+            ->get();
+
+        // ── Bahan baku yang disediakan beserta harga ─────────────────────
+        $bahanBakuSaya = $produsen->bahanBakus()
+            ->with('satuan')
+            ->orderBy('nama_bahan_baku')
+            ->limit(6)
+            ->get();
+
+        return view('pages.produsen.dashboard', compact(
+            'produsen',
+            'jumlahBahanBaku',
+            'jumlahPermintaanMenunggu',
+            'jumlahPermintaanTambahan',
+            'jumlahMenungguPengiriman',
+            'belumDibayar',
+            'sudahDibayar',
+            'permintaanMasuk',
+            'permintaanTambahan',
+            'menungguPengiriman',
+            'pembayaranTerbaru',
+            'bahanBakuSaya'
+        ));
     }
 
     /**

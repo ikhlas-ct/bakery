@@ -281,6 +281,13 @@
                         <p>Permintaan Masuk</p>
                     </a>
                 </li>
+
+                <li class="nav-item {{ request()->routeIs('produsen.pembayaran.*') ? 'active' : '' }}">
+                    <a href="{{ route('produsen.pembayaran.index') }}">
+                        <i class="fas fa-wallet"></i>
+                        <p>Pembayaran Saya</p>
+                    </a>
+                </li>
             @endif
 
             <!-- Logout -->
