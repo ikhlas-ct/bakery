@@ -1,17 +1,48 @@
 <style>
-    /* Ikon menu tidak boleh menyusut saat teks menu panjang (mis. "Laporan Penerimaan Barang"),
-       supaya teks semua menu sejajar. Teks panjang akan turun ke baris berikutnya. */
+    /* Ikon menu tidak boleh menyusut saat teks menu panjang (mis. "Laporan Pemakaian Bahan Baku"),
+       supaya teks semua menu sejajar. Teks panjang turun ke baris berikutnya, tidak terpotong.
+       !important dipakai karena CSS template sidebar memaksa teks menu satu baris. */
     .sidebar .nav-item > a > i,
     .sidebar-wrapper .nav-item > a > i {
         flex-shrink: 0 !important;
     }
     .sidebar .nav-item > a > p,
     .sidebar-wrapper .nav-item > a > p {
-        min-width: 0;
-        white-space: normal;
+        flex: 1 1 0%;
+        min-width: 0 !important;
+        white-space: normal !important;
+        overflow-wrap: anywhere;
         line-height: 1.3;
     }
+
+    /* Badge angka di menu: jumlah item yang perlu tindakan (tidak dirender bila 0). */
+    .sidebar .nav-item > a > .sidebar-badge,
+    .sidebar-wrapper .nav-item > a > .sidebar-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-left: auto;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1;
+        color: #fff;
+    }
+    .sidebar-badge--warning { background: #ea580c; }
+    .sidebar-badge--danger  { background: #dc2626; }
+    /* Saat sidebar diciutkan (hanya ikon), sembunyikan badge kecuali sedang di-hover. */
+    .sidebar_minimize:not(.sidebar_minimize_hover) .sidebar-badge { display: none !important; }
 </style>
+
+@php
+    // Angka badge disiapkan oleh App\View\Composers\SidebarBadgeComposer (tanpa query di Blade).
+    $sidebarBadges = $sidebarBadges ?? [];
+    $badgeText = fn ($n) => $n > 99 ? '99+' : $n;
+@endphp
 
 <!-- Sidebar -->
 <div class="sidebar-logo">
@@ -117,6 +148,10 @@
                     <a href="{{ route('pengalihan-bahan-baku.index') }}">
                         <i class="fas fa-random"></i>
                         <p>Pengalihan Bahan Baku</p>
+                        @if (($sidebarBadges['pengalihan'] ?? 0) > 0)
+                            <span class="sidebar-badge sidebar-badge--warning"
+                                title="{{ $sidebarBadges['pengalihan'] }} pengalihan menunggu penentuan produsen pengganti">{{ $badgeText($sidebarBadges['pengalihan']) }}</span>
+                        @endif
                     </a>
                 </li>
 
@@ -124,6 +159,10 @@
                     <a href="{{ route('penerimaan-bahan-baku.index') }}">
                         <i class="fas fa-truck-loading"></i>
                         <p>Penerimaan Bahan Baku</p>
+                        @if (($sidebarBadges['tagihan'] ?? 0) > 0)
+                            <span class="sidebar-badge sidebar-badge--warning"
+                                title="{{ $sidebarBadges['tagihan'] }} tagihan menunggu pembayaran">{{ $badgeText($sidebarBadges['tagihan']) }}</span>
+                        @endif
                     </a>
                 </li>
 
@@ -166,6 +205,10 @@
                     <a href="{{ route('laporan.kedaluwarsa.index') }}">
                         <i class="fas fa-hourglass-half"></i>
                         <p>Bahan Baku Mendekati Kedaluwarsa</p>
+                        @if (($sidebarBadges['kedaluwarsa'] ?? 0) > 0)
+                            <span class="sidebar-badge sidebar-badge--danger"
+                                title="{{ $sidebarBadges['kedaluwarsa'] }} batch sudah kedaluwarsa atau kedaluwarsa dalam {{ \App\Services\StokService::BATAS_MENDESAK }} hari">{{ $badgeText($sidebarBadges['kedaluwarsa']) }}</span>
+                        @endif
                     </a>
                 </li>
 
@@ -232,6 +275,10 @@
                     <a href="{{ route('penerimaan-bahan-baku.index') }}">
                         <i class="fas fa-truck-loading"></i>
                         <p>Penerimaan Bahan Baku</p>
+                        @if (($sidebarBadges['tagihan'] ?? 0) > 0)
+                            <span class="sidebar-badge sidebar-badge--warning"
+                                title="{{ $sidebarBadges['tagihan'] }} tagihan menunggu pembayaran">{{ $badgeText($sidebarBadges['tagihan']) }}</span>
+                        @endif
                     </a>
                 </li>
 
@@ -267,6 +314,10 @@
                     <a href="{{ route('laporan.kedaluwarsa.index') }}">
                         <i class="fas fa-hourglass-half"></i>
                         <p>Bahan Baku Mendekati Kedaluwarsa</p>
+                        @if (($sidebarBadges['kedaluwarsa'] ?? 0) > 0)
+                            <span class="sidebar-badge sidebar-badge--danger"
+                                title="{{ $sidebarBadges['kedaluwarsa'] }} batch sudah kedaluwarsa atau kedaluwarsa dalam {{ \App\Services\StokService::BATAS_MENDESAK }} hari">{{ $badgeText($sidebarBadges['kedaluwarsa']) }}</span>
+                        @endif
                     </a>
                 </li>
 
@@ -330,6 +381,10 @@
                     <a href="{{ route('produsen.permintaan.index') }}">
                         <i class="fas fa-inbox"></i>
                         <p>Permintaan Masuk</p>
+                        @if (($sidebarBadges['permintaan_masuk'] ?? 0) > 0)
+                            <span class="sidebar-badge sidebar-badge--warning"
+                                title="{{ $sidebarBadges['permintaan_masuk'] }} permintaan belum direspon">{{ $badgeText($sidebarBadges['permintaan_masuk']) }}</span>
+                        @endif
                     </a>
                 </li>
 

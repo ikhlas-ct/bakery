@@ -4,9 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Login</title>
+    @php
+        // Data dari Pengaturan Website. Bila nama masih kosong (NULL/""), pakai nama bawaan.
+        $namaToko = $settings?->nama ?: 'Roti Baru Bakery';
+        $logoUrl  = $settings?->logo_url ?? asset('default-image/default_logo.png');
+    @endphp
+    <title>Login — {{ $namaToko }}</title>
     <link rel="stylesheet" href="https://unpkg.com/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="icon" href="{{ $settings->logo_url }}" type="image/png">
+    <link rel="icon" href="{{ $logoUrl }}" type="image/png">
 </head>
 <body>
 <!-- Login 13 - Bootstrap Brain Component -->
@@ -18,10 +23,13 @@
 
                     <div class="card-body p-3 p-md-4 p-xl-5">
                         <div class="text-center mb-3">
-                            <h2 class="mb-2">{{ $settings->nama ?? 'Tidak ada nama' }}</h2>
+                            <h2 class="mb-2">{{ $namaToko }}</h2>
+                            @if (! empty($settings?->slogan))
+                                <p class="text-secondary small mb-3">{{ $settings->slogan }}</p>
+                            @endif
                             <a href="#!">
-                                <img src="{{ $settings->logo_url }}"
-                                     alt="Logo"
+                                <img src="{{ $logoUrl }}"
+                                     alt="Logo {{ $namaToko }}"
                                      height="80">
                             </a>
                         </div>

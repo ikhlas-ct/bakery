@@ -7,6 +7,7 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use App\Models\WebsiteSetting;
+use App\View\Composers\SidebarBadgeComposer;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -43,5 +44,10 @@ class AppServiceProvider extends ServiceProvider
 
             $view->with('settings', $settings);
         });
+
+        // Badge angka di menu sidebar ($sidebarBadges). Hanya untuk partial sidebar
+        // (nama view berakhiran "sidebar", mis. layouts.user.sidebar), jadi query
+        // tidak berjalan di view lain. Hitungannya per role ada di SidebarBadgeComposer.
+        View::composer('*sidebar', SidebarBadgeComposer::class);
     }
 }
