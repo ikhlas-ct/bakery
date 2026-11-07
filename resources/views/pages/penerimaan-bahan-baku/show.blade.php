@@ -72,6 +72,15 @@
     .btn-cetak-receipt { background: #16a34a; border-color: #16a34a; color: #fff; }
     .btn-cetak-receipt:hover { background: #15803d; border-color: #15803d; color: #fff; }
 
+    .bukti-thumb {
+        width: 72px; height: 72px; object-fit: cover; border-radius: 10px;
+        border: 1.5px solid #e2e8f0; background: #f8fafc; display: block;
+    }
+    .receipt-thumb {
+        max-width: 100%; max-height: 360px; border-radius: 12px;
+        border: 1.5px solid #e2e8f0; background: #f8fafc;
+    }
+
     .alert { border-radius: 12px; border: none; font-size: .85rem; }
     .alert-success { background: #dcfce7; color: #166534; }
     .alert-danger { background: #fee2e2; color: #991b1b; }
@@ -135,6 +144,16 @@
             <i class="fas fa-check-circle"></i> {{ session('success') }}
         </div>
     @endif
+    @if ($errors->any())
+        <div class="alert alert-danger mb-3">
+            <ul class="mb-0 ps-3">
+                @foreach (array_unique($errors->all()) as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     @if (session('error'))
         <div class="alert alert-danger d-flex align-items-center mb-3 gap-2">
             <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
@@ -308,6 +327,16 @@
                                         Dibayar {{ \Carbon\Carbon::parse($bayar->tanggal_bayar)->translatedFormat('d M Y') }}
                                         @if ($bayar->metode_bayar) · {{ $bayar->metode_bayar }} @endif
                                     </div>
+                                    @if ($bayar->bukti_bayar ?? null)
+                                        <div class="mt-2">
+                                            <div class="sub-text mb-1">
+                                                {{ $bayar->metode_bayar === 'Transfer' ? 'Bukti transfer' : 'Bukti pembayaran tunai' }}
+                                            </div>
+                                            <a href="{{ asset('storage/' . $bayar->bukti_bayar) }}" target="_blank" rel="noopener">
+                                                <img src="{{ asset('storage/' . $bayar->bukti_bayar) }}" alt="Bukti pembayaran" class="bukti-thumb">
+                                            </a>
+                                        </div>
+                                    @endif
                                     @if ($bisaBatal)
                                         <form action="{{ route('penerimaan-bahan-baku.batal-bayar', $penerimaan->id) }}"
                                             method="POST" class="mt-2 form-batal-bayar">
@@ -320,7 +349,7 @@
                                     @endif
                                 @elseif ($bayar->status_acc !== 'ditolak' && $bisaBayar)
                                     <form action="{{ route('penerimaan-bahan-baku.bayar', $penerimaan->id) }}"
-                                        method="POST" class="row g-2 mt-2">
+                                        method="POST" enctype="multipart/form-data" class="row g-2 mt-2">
                                         @csrf
                                         <input type="hidden" name="permintaan_bahan_baku_id" value="{{ $t['permintaan_id'] }}">
                                         <div class="col-sm-5">
@@ -328,14 +357,20 @@
                                                 value="{{ now()->toDateString() }}" max="{{ now()->toDateString() }}" required>
                                         </div>
                                         <div class="col-sm-4">
-                                            <select name="metode_bayar" class="form-select form-select-sm" required>
+                                            <select name="metode_bayar" class="form-select form-select-sm js-metode-bayar" required>
                                                 <option value="">Metode</option>
-                                                <option>Tunai</option>
-                                                <option>Transfer</option>
+                                                <option @selected(old('metode_bayar') === 'Tunai')>Tunai</option>
+                                                <option @selected(old('metode_bayar') === 'Transfer')>Transfer</option>
                                             </select>
                                         </div>
                                         <div class="col-sm-3 d-grid">
                                             <button type="submit" class="btn btn-success btn-sm">Bayar</button>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="sub-text mb-1 js-label-bukti">Bukti pembayaran (pilih metode terlebih dahulu)</label>
+                                            <input type="file" name="bukti_bayar" class="form-control form-control-sm"
+                                                accept="image/jpeg,image/png,image/webp" required>
+                                            <div class="sub-text mt-1">JPG, PNG, atau WEBP, maksimal 4 MB.</div>
                                         </div>
                                     </form>
                                 @endif
@@ -354,11 +389,107 @@
         </div>
     </div>
 
+    {{-- ── Gambar receipt (diunggah setelah receipt dicetak) ── --}}
+    @if ($adaLunas && \Illuminate\Support\Facades\Route::has('penerimaan-bahan-baku.upload-receipt'))
+        <div class="card shadow-sm mt-3">
+            <div class="card-body">
+                <div class="section-divider"><i class="fas fa-receipt me-2"></i>Gambar Receipt</div>
+
+                <div class="row g-3 align-items-start">
+                    <div class="col-md-5">
+                        @if ($penerimaan->foto_receipt)
+                            <a href="{{ asset('storage/' . $penerimaan->foto_receipt) }}" target="_blank" rel="noopener">
+                                <img src="{{ asset('storage/' . $penerimaan->foto_receipt) }}" alt="Gambar receipt" class="receipt-thumb">
+                            </a>
+                        @else
+                            <div class="sub-text">
+                                <i class="fas fa-image me-1"></i> Belum ada gambar receipt. Cetak receipt terlebih dahulu,
+                                lalu foto atau pindai dan unggah di sini.
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="col-md-7">
+                        <form action="{{ route('penerimaan-bahan-baku.upload-receipt', $penerimaan->id) }}"
+                            method="POST" enctype="multipart/form-data" class="row g-2">
+                            @csrf
+                            <div class="col-12">
+                                <input type="file" name="foto_receipt" class="form-control form-control-sm"
+                                    accept="image/jpeg,image/png,image/webp" required>
+                                <div class="sub-text mt-1">JPG, PNG, atau WEBP, maksimal 4 MB.</div>
+                            </div>
+                            <div class="col-12 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-upload me-1"></i>
+                                    {{ $penerimaan->foto_receipt ? 'Ganti Gambar' : 'Unggah Gambar' }}
+                                </button>
+                                @if ($penerimaan->foto_receipt && \Illuminate\Support\Facades\Route::has('penerimaan-bahan-baku.hapus-receipt'))
+                                    <button type="button" class="btn btn-outline-danger btn-sm" id="btn-hapus-receipt">
+                                        <i class="fas fa-trash-alt me-1"></i> Hapus
+                                    </button>
+                                @endif
+                            </div>
+                        </form>
+
+                        @if ($penerimaan->foto_receipt && \Illuminate\Support\Facades\Route::has('penerimaan-bahan-baku.hapus-receipt'))
+                            <form id="form-hapus-receipt" method="POST" class="d-none"
+                                action="{{ route('penerimaan-bahan-baku.hapus-receipt', $penerimaan->id) }}">
+                                @csrf @method('DELETE')
+                            </form>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
 </div>
 @endsection
 
 @section('scripts')
 <script>
+    // Label bukti menyesuaikan metode bayar yang dipilih
+    document.querySelectorAll('.js-metode-bayar').forEach(function (select) {
+        const label = select.closest('form').querySelector('.js-label-bukti');
+        const ubah = function () {
+            if (select.value === 'Transfer') label.textContent = 'Bukti transfer';
+            else if (select.value === 'Tunai') label.textContent = 'Bukti pembayaran tunai (mis. foto nota / serah terima uang)';
+            else label.textContent = 'Bukti pembayaran (pilih metode terlebih dahulu)';
+        };
+        select.addEventListener('change', ubah);
+        ubah();
+    });
+
+    // Konfirmasi pembatalan pembayaran (bukti bayar & gambar receipt ikut terhapus)
+    document.querySelectorAll('.form-batal-bayar').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            if (form.dataset.ok) return;
+            e.preventDefault();
+            swal({
+                title: 'Batalkan pembayaran?',
+                text: 'Bukti pembayaran dan gambar receipt yang sudah diunggah akan ikut dihapus.',
+                icon: 'warning',
+                buttons: { cancel: 'Tidak', confirm: { text: 'Ya, Batalkan', className: 'btn-danger' } },
+                dangerMode: true,
+            }).then(ok => { if (ok) { form.dataset.ok = '1'; form.submit(); } });
+        });
+    });
+
+    const btnHapusReceipt = document.getElementById('btn-hapus-receipt');
+    if (btnHapusReceipt) {
+        btnHapusReceipt.addEventListener('click', function () {
+            swal({
+                title: 'Hapus gambar receipt?',
+                text: 'Gambar receipt yang sudah diunggah akan dihapus.',
+                icon: 'warning',
+                buttons: { cancel: 'Batal', confirm: { text: 'Ya, Hapus!', className: 'btn-danger' } },
+                dangerMode: true,
+            }).then(confirmed => {
+                if (confirmed) document.getElementById('form-hapus-receipt').submit();
+            });
+        });
+    }
+
     const btnHapus = document.getElementById('btn-hapus');
     if (btnHapus) {
         btnHapus.addEventListener('click', function () {

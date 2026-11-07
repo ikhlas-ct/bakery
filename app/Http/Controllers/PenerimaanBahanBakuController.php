@@ -15,6 +15,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -36,6 +38,8 @@ use Illuminate\View\View;
 class PenerimaanBahanBakuController extends Controller
 {
     private const STATUS_SETUJU = ['disetujui', 'disetujui_sebagian'];
+
+    private const METODE_BAYAR = ['Tunai', 'Transfer'];
 
     private const MESSAGES = [
         'produsen_id.required' => 'Produsen wajib dipilih.',
@@ -262,19 +266,27 @@ class PenerimaanBahanBakuController extends Controller
         $data = $request->validate([
             'permintaan_bahan_baku_id' => ['required', 'integer'],
             'tanggal_bayar' => ['required', 'date', 'before_or_equal:today'],
-            'metode_bayar' => ['required', 'string', 'max:50'],
+            'metode_bayar' => ['required', Rule::in(self::METODE_BAYAR)],
+            // Tunai maupun Transfer wajib disertai bukti (bukti transfer / bukti serah terima uang tunai).
+            'bukti_bayar' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ], [
             'tanggal_bayar.required' => 'Tanggal bayar wajib diisi.',
             'tanggal_bayar.before_or_equal' => 'Tanggal bayar tidak boleh melebihi hari ini.',
             'metode_bayar.required' => 'Metode bayar wajib diisi.',
-            'metode_bayar.max' => 'Metode bayar maksimal 50 karakter.',
+            'metode_bayar.in' => 'Metode bayar harus Tunai atau Transfer.',
+            'bukti_bayar.required' => 'Bukti pembayaran wajib diunggah.',
+            'bukti_bayar.file' => 'Bukti pembayaran harus berupa file.',
+            'bukti_bayar.mimes' => 'Bukti pembayaran harus berformat JPG, JPEG, PNG, atau WEBP.',
+            'bukti_bayar.max' => 'Ukuran bukti pembayaran maksimal 4 MB.',
         ]);
 
         $permintaanId = (int) $data['permintaan_bahan_baku_id'];
         $produsenId = (int) $penerimaanBahanBaku->produsen_id;
 
+        $pathBukti = null;
+
         try {
-            DB::transaction(function () use ($data, $penerimaanBahanBaku, $permintaanId, $produsenId) {
+            DB::transaction(function () use ($data, $request, $penerimaanBahanBaku, $permintaanId, $produsenId, &$pathBukti) {
                 if (! in_array($permintaanId, $this->permintaanIds($penerimaanBahanBaku->penerimaanBahanBakuDetails), true)) {
                     throw ValidationException::withMessages(['pembayaran' => 'Permintaan tidak terkait dengan penerimaan ini.']);
                 }
@@ -304,17 +316,27 @@ class PenerimaanBahanBakuController extends Controller
                     throw ValidationException::withMessages(['pembayaran' => 'Belum ada tagihan yang dapat dibayar.']);
                 }
 
+                // File baru disimpan setelah semua pengecekan lolos agar tidak ada file yatim.
+                $pathBukti = $request->file('bukti_bayar')->store('bukti-pembayaran', 'public');
+
                 DB::table('pembayarans')->where('id', $bayar->id)->update([
                     'status_acc' => 'disetujui', // dibayar langsung oleh admin
                     'status_bayar' => 'lunas',
                     'tanggal_bayar' => $data['tanggal_bayar'],
                     'metode_bayar' => $data['metode_bayar'],
+                    'bukti_bayar' => $pathBukti,
                     'updated_at' => now(),
                 ]);
             });
         } catch (ValidationException $e) {
+            $this->hapusFile($pathBukti);
+
             return redirect()->route('penerimaan-bahan-baku.show', $penerimaanBahanBaku->id)
                 ->with('error', collect($e->errors())->flatten()->first());
+        } catch (\Throwable $e) {
+            $this->hapusFile($pathBukti);
+
+            throw $e;
         }
 
         return redirect()
@@ -332,6 +354,12 @@ class PenerimaanBahanBakuController extends Controller
                 ->with('error', 'Permintaan tidak terkait dengan penerimaan ini.');
         }
 
+        $buktiLama = DB::table('pembayarans')
+            ->where('permintaan_bahan_baku_id', $permintaanId)
+            ->where('produsen_id', $produsenId)
+            ->where('status_bayar', 'lunas')
+            ->value('bukti_bayar');
+
         $diubah = DB::table('pembayarans')
             ->where('permintaan_bahan_baku_id', $permintaanId)
             ->where('produsen_id', $produsenId)
@@ -341,13 +369,87 @@ class PenerimaanBahanBakuController extends Controller
                 'status_acc' => 'menunggu',
                 'tanggal_bayar' => null,
                 'metode_bayar' => null,
+                'bukti_bayar' => null,
                 'pemilik_id' => null,
                 'updated_at' => now(),
             ]);
 
+        if ($diubah) {
+            $this->hapusFile($buktiLama);
+
+            // Isi receipt berubah setelah pembayaran dibatalkan, jadi foto receipt lama tidak berlaku lagi.
+            PenerimaanBahanBaku::where('produsen_id', $produsenId)
+                ->whereNotNull('foto_receipt')
+                ->whereHas('penerimaanBahanBakuDetails.permintaanBahanBakuDetail', fn ($q) => $q->where('permintaan_bahan_baku_id', $permintaanId))
+                ->get()
+                ->each(function (PenerimaanBahanBaku $p) {
+                    $this->hapusFile($p->foto_receipt);
+                    $p->update(['foto_receipt' => null]);
+                });
+        }
+
         return redirect()
             ->route('penerimaan-bahan-baku.show', $penerimaanBahanBaku->id)
             ->with($diubah ? 'success' : 'error', $diubah ? 'Pembayaran dibatalkan, tagihan kembali berstatus belum dibayar.' : 'Tagihan tidak berstatus lunas.');
+    }
+
+    /**
+     * Unggah foto/scan receipt yang sudah dicetak (dan ditandatangani).
+     * Satu receipt mewakili seluruh tagihan lunas pada penerimaan ini, jadi disimpan di penerimaan.
+     * Mengunggah lagi akan menggantikan file sebelumnya.
+     */
+    public function uploadReceipt(Request $request, PenerimaanBahanBaku $penerimaanBahanBaku): RedirectResponse
+    {
+        $request->validate([
+            'foto_receipt' => ['required', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+        ], [
+            'foto_receipt.required' => 'Pilih gambar receipt terlebih dahulu.',
+            'foto_receipt.file' => 'Receipt harus berupa file.',
+            'foto_receipt.mimes' => 'Receipt harus berformat JPG, JPEG, PNG, atau WEBP.',
+            'foto_receipt.max' => 'Ukuran gambar receipt maksimal 4 MB.',
+        ]);
+
+        $permintaanIds = $this->permintaanIds($penerimaanBahanBaku->penerimaanBahanBakuDetails);
+
+        $adaLunas = ! empty($permintaanIds) && DB::table('pembayarans')
+            ->whereIn('permintaan_bahan_baku_id', $permintaanIds)
+            ->where('produsen_id', $penerimaanBahanBaku->produsen_id)
+            ->where('status_bayar', 'lunas')
+            ->exists();
+
+        if (! $adaLunas) {
+            return redirect()->route('penerimaan-bahan-baku.show', $penerimaanBahanBaku->id)
+                ->with('error', 'Receipt hanya dapat diunggah setelah ada tagihan yang lunas.');
+        }
+
+        $lama = $penerimaanBahanBaku->foto_receipt;
+        $baru = $request->file('foto_receipt')->store('receipt-pembayaran', 'public');
+
+        try {
+            $penerimaanBahanBaku->update(['foto_receipt' => $baru]);
+        } catch (\Throwable $e) {
+            $this->hapusFile($baru);
+
+            throw $e;
+        }
+
+        $this->hapusFile($lama);
+
+        return redirect()->route('penerimaan-bahan-baku.show', $penerimaanBahanBaku->id)
+            ->with('success', 'Gambar receipt berhasil diunggah.');
+    }
+
+    public function hapusReceipt(PenerimaanBahanBaku $penerimaanBahanBaku): RedirectResponse
+    {
+        $lama = $penerimaanBahanBaku->foto_receipt;
+
+        if ($lama) {
+            $penerimaanBahanBaku->update(['foto_receipt' => null]);
+            $this->hapusFile($lama);
+        }
+
+        return redirect()->route('penerimaan-bahan-baku.show', $penerimaanBahanBaku->id)
+            ->with($lama ? 'success' : 'error', $lama ? 'Gambar receipt dihapus.' : 'Belum ada gambar receipt.');
     }
 
     public function edit(PenerimaanBahanBaku $penerimaanBahanBaku): View
@@ -667,6 +769,14 @@ class PenerimaanBahanBakuController extends Controller
             'created_at' => $now,
             'updated_at' => $now,
         ]);
+    }
+
+    /** Hapus file dari disk public bila ada (aman dipanggil dengan null). */
+    private function hapusFile(?string $path): void
+    {
+        if ($path) {
+            Storage::disk('public')->delete($path);
+        }
     }
 
     private function generateNomor(Carbon $tanggal): string

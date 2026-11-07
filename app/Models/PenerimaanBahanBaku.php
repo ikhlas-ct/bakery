@@ -19,6 +19,7 @@ class PenerimaanBahanBaku extends Model
         'nomor_transaksi',
         'tanggal_terima',
         'catatan',
+        'foto_receipt',
     ];
 
     protected $casts = [

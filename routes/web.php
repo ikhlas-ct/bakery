@@ -134,6 +134,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/penerimaan-bahan-baku/{penerimaanBahanBaku}/bayar', [PenerimaanBahanBakuController::class, 'bayar'])->name('penerimaan-bahan-baku.bayar');
     Route::post('/penerimaan-bahan-baku/{penerimaanBahanBaku}/batal-bayar', [PenerimaanBahanBakuController::class, 'batalBayar'])->name('penerimaan-bahan-baku.batal-bayar');
 
+    // Gambar receipt yang sudah dicetak (diunggah admin setelah pembayaran lunas).
+    Route::post('/penerimaan-bahan-baku/{penerimaanBahanBaku}/receipt', [PenerimaanBahanBakuController::class, 'uploadReceipt'])->name('penerimaan-bahan-baku.upload-receipt');
+    Route::delete('/penerimaan-bahan-baku/{penerimaanBahanBaku}/receipt', [PenerimaanBahanBakuController::class, 'hapusReceipt'])->name('penerimaan-bahan-baku.hapus-receipt');
+
     // ── Pemakaian Bahan Baku (pengeluaran stok gudang oleh admin dengan metode FEFO) ──
     // Stok diambil otomatis dari batch penerimaan dengan tanggal terima paling lama; stok batch & cache stok bahan baku ikut berkurang.
     // Endpoint AJAX: daftar batch (urutan FEFO) untuk pratinjau di form. Harus berada SEBELUM route {pemakaianBahanBaku}.
