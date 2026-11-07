@@ -16,6 +16,7 @@ use App\Http\Controllers\PenerimaanBahanBakuController;
 use App\Http\Controllers\PemakaianBahanBakuController;
 use App\Http\Controllers\PermintaanTambahanController;
 use App\Http\Controllers\PembayaranProdusenController;
+use App\Http\Controllers\RiwayatPengirimanController;
 use App\Http\Controllers\LaporanPenerimaanBahanBakuController;
 use App\Http\Controllers\LaporanPemakaianBahanBakuController;
 use App\Http\Controllers\LaporanReceiptPembayaranController;
@@ -196,6 +197,14 @@ Route::middleware(['auth', 'role:produsen'])->group(function () {
     Route::get('/produsen/permintaan-tambahan', [PermintaanTambahanController::class, 'index'])->name('produsen.permintaan-tambahan.index');
     Route::get('/produsen/permintaan-tambahan/{pengalihanBahanBaku}', [PermintaanTambahanController::class, 'show'])->name('produsen.permintaan-tambahan.show');
     Route::put('/produsen/permintaan-tambahan/{pengalihanBahanBaku}', [PermintaanTambahanController::class, 'respon'])->name('produsen.permintaan-tambahan.respon');
+
+    // =================== Riwayat Pengiriman (hanya baca; penerimaan milik produsen yang login) ===================
+    Route::get('/produsen/pengiriman', [RiwayatPengirimanController::class, 'index'])->name('produsen.pengiriman.index');
+    // Cetak laporan per periode (harian/bulanan/tahunan/antara tanggal). HARUS sebelum route {penerimaanBahanBaku}.
+    Route::get('/produsen/pengiriman/cetak', [RiwayatPengirimanController::class, 'cetak'])->name('produsen.pengiriman.cetak');
+    Route::get('/produsen/pengiriman/{penerimaanBahanBaku}', [RiwayatPengirimanController::class, 'show'])->name('produsen.pengiriman.show');
+    // Cetak satu transaksi pengiriman.
+    Route::get('/produsen/pengiriman/{penerimaanBahanBaku}/cetak', [RiwayatPengirimanController::class, 'cetakTransaksi'])->name('produsen.pengiriman.cetak-transaksi');
 
     // =================== Pembayaran Saya (hanya baca; milik produsen yang login) ===================
     Route::get('/produsen/pembayaran', [PembayaranProdusenController::class, 'index'])->name('produsen.pembayaran.index');
