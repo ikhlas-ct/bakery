@@ -204,6 +204,20 @@
                     <span class="sidebar-mini-icon">
                         <i class="fa fa-ellipsis-h"></i>
                     </span>
+                    <h4 class="text-section">Transaksi</h4>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('penerimaan-bahan-baku.*') ? 'active' : '' }}">
+                    <a href="{{ route('penerimaan-bahan-baku.index') }}">
+                        <i class="fas fa-truck-loading"></i>
+                        <p>Penerimaan Bahan Baku</p>
+                    </a>
+                </li>
+
+                <li class="nav-section">
+                    <span class="sidebar-mini-icon">
+                        <i class="fa fa-ellipsis-h"></i>
+                    </span>
                     <h4 class="text-section">Laporan</h4>
                 </li>
 
@@ -228,21 +242,6 @@
                     </a>
                 </li>
 
-                <li class="nav-section">
-                    <span class="sidebar-mini-icon">
-                        <i class="fa fa-ellipsis-h"></i>
-                    </span>
-                    <h4 class="text-section">Keuangan</h4>
-                </li>
-
-                {{--
-                <li class="nav-item {{ request()->routeIs('pembayaran.*') ? 'active' : '' }}">
-                    <a href="{{ route('pembayaran.index') }}">
-                        <i class="fas fa-money-bill-wave"></i>
-                        <p>Pembayaran</p>
-                    </a>
-                </li>
-                --}}
             @endif
 
             {{-- ================= MENU KHUSUS PRODUSEN ================= --}}

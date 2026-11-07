@@ -97,6 +97,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 });
 
 // =================== Transaksi (dikelola oleh Admin saja) ===================
+// (Penerimaan Bahan Baku dipisah ke grup di bawah karena dapat diakses Admin & Pemilik.)
 Route::middleware(['auth', 'role:admin'])->group(function () {
 
     // Endpoint AJAX: ambil produsen (+harga) yang memasok sebuah bahan baku.
@@ -119,26 +120,6 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::put('/pengalihan-bahan-baku/{pengalihanBahanBaku}', [PengalihanBahanBakuController::class, 'update'])->name('pengalihan-bahan-baku.update');
     Route::delete('/pengalihan-bahan-baku/{pengalihanBahanBaku}', [PengalihanBahanBakuController::class, 'destroy'])->name('pengalihan-bahan-baku.destroy');
 
-    // ── Penerimaan Bahan Baku (admin mencatat barang yang dikirim produsen; stok & tagihan pembayaran ikut diperbarui) ──
-    // Endpoint AJAX: semua item (dari berbagai permintaan) yang disetujui produsen & belum diterima penuh (dipakai form tambah).
-    Route::get('/penerimaan-bahan-baku/produsen/{produsen}/item', [PenerimaanBahanBakuController::class, 'itemProdusen'])->name('penerimaan-bahan-baku.item-produsen');
-
-    Route::get('/penerimaan-bahan-baku', [PenerimaanBahanBakuController::class, 'index'])->name('penerimaan-bahan-baku.index');
-    Route::get('/penerimaan-bahan-baku/create', [PenerimaanBahanBakuController::class, 'create'])->name('penerimaan-bahan-baku.create');
-    Route::post('/penerimaan-bahan-baku', [PenerimaanBahanBakuController::class, 'store'])->name('penerimaan-bahan-baku.store');
-    Route::get('/penerimaan-bahan-baku/{penerimaanBahanBaku}', [PenerimaanBahanBakuController::class, 'show'])->name('penerimaan-bahan-baku.show');
-    Route::get('/penerimaan-bahan-baku/{penerimaanBahanBaku}/edit', [PenerimaanBahanBakuController::class, 'edit'])->name('penerimaan-bahan-baku.edit');
-    Route::put('/penerimaan-bahan-baku/{penerimaanBahanBaku}', [PenerimaanBahanBakuController::class, 'update'])->name('penerimaan-bahan-baku.update');
-    Route::delete('/penerimaan-bahan-baku/{penerimaanBahanBaku}', [PenerimaanBahanBakuController::class, 'destroy'])->name('penerimaan-bahan-baku.destroy');
-
-    // Pembayaran tagihan produsen dari halaman detail penerimaan (admin bisa langsung melunasi / membatalkan pelunasan).
-    Route::post('/penerimaan-bahan-baku/{penerimaanBahanBaku}/bayar', [PenerimaanBahanBakuController::class, 'bayar'])->name('penerimaan-bahan-baku.bayar');
-    Route::post('/penerimaan-bahan-baku/{penerimaanBahanBaku}/batal-bayar', [PenerimaanBahanBakuController::class, 'batalBayar'])->name('penerimaan-bahan-baku.batal-bayar');
-
-    // Gambar receipt yang sudah dicetak (diunggah admin setelah pembayaran lunas).
-    Route::post('/penerimaan-bahan-baku/{penerimaanBahanBaku}/receipt', [PenerimaanBahanBakuController::class, 'uploadReceipt'])->name('penerimaan-bahan-baku.upload-receipt');
-    Route::delete('/penerimaan-bahan-baku/{penerimaanBahanBaku}/receipt', [PenerimaanBahanBakuController::class, 'hapusReceipt'])->name('penerimaan-bahan-baku.hapus-receipt');
-
     // ── Pemakaian Bahan Baku (pengeluaran stok gudang oleh admin dengan metode FEFO) ──
     // Stok diambil otomatis dari batch penerimaan dengan tanggal terima paling lama; stok batch & cache stok bahan baku ikut berkurang.
     // Endpoint AJAX: daftar batch (urutan FEFO) untuk pratinjau di form. Harus berada SEBELUM route {pemakaianBahanBaku}.
@@ -151,6 +132,32 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/pemakaian-bahan-baku/{pemakaianBahanBaku}/edit', [PemakaianBahanBakuController::class, 'edit'])->name('pemakaian-bahan-baku.edit');
     Route::put('/pemakaian-bahan-baku/{pemakaianBahanBaku}', [PemakaianBahanBakuController::class, 'update'])->name('pemakaian-bahan-baku.update');
     Route::delete('/pemakaian-bahan-baku/{pemakaianBahanBaku}', [PemakaianBahanBakuController::class, 'destroy'])->name('pemakaian-bahan-baku.destroy');
+});
+
+// =================== Penerimaan Bahan Baku (Admin & Pemilik, hak akses sama) ===================
+// Pemilik dapat melihat & mengelola barang yang dikirim produsen persis seperti admin.
+// Pembatasan peran dilakukan di dalam controller (middleware() di PenerimaanBahanBakuController), jadi middleware rute cukup 'auth'.
+Route::middleware(['auth'])->group(function () {
+
+    // ── Penerimaan Bahan Baku (admin/pemilik mencatat barang yang dikirim produsen; stok & tagihan pembayaran ikut diperbarui) ──
+    // Endpoint AJAX: semua item (dari berbagai permintaan) yang disetujui produsen & belum diterima penuh (dipakai form tambah).
+    Route::get('/penerimaan-bahan-baku/produsen/{produsen}/item', [PenerimaanBahanBakuController::class, 'itemProdusen'])->name('penerimaan-bahan-baku.item-produsen');
+
+    Route::get('/penerimaan-bahan-baku', [PenerimaanBahanBakuController::class, 'index'])->name('penerimaan-bahan-baku.index');
+    Route::get('/penerimaan-bahan-baku/create', [PenerimaanBahanBakuController::class, 'create'])->name('penerimaan-bahan-baku.create');
+    Route::post('/penerimaan-bahan-baku', [PenerimaanBahanBakuController::class, 'store'])->name('penerimaan-bahan-baku.store');
+    Route::get('/penerimaan-bahan-baku/{penerimaanBahanBaku}', [PenerimaanBahanBakuController::class, 'show'])->name('penerimaan-bahan-baku.show');
+    Route::get('/penerimaan-bahan-baku/{penerimaanBahanBaku}/edit', [PenerimaanBahanBakuController::class, 'edit'])->name('penerimaan-bahan-baku.edit');
+    Route::put('/penerimaan-bahan-baku/{penerimaanBahanBaku}', [PenerimaanBahanBakuController::class, 'update'])->name('penerimaan-bahan-baku.update');
+    Route::delete('/penerimaan-bahan-baku/{penerimaanBahanBaku}', [PenerimaanBahanBakuController::class, 'destroy'])->name('penerimaan-bahan-baku.destroy');
+
+    // Pembayaran tagihan produsen dari halaman detail penerimaan (admin & pemilik bisa langsung melunasi / membatalkan pelunasan).
+    Route::post('/penerimaan-bahan-baku/{penerimaanBahanBaku}/bayar', [PenerimaanBahanBakuController::class, 'bayar'])->name('penerimaan-bahan-baku.bayar');
+    Route::post('/penerimaan-bahan-baku/{penerimaanBahanBaku}/batal-bayar', [PenerimaanBahanBakuController::class, 'batalBayar'])->name('penerimaan-bahan-baku.batal-bayar');
+
+    // Gambar receipt yang sudah dicetak (diunggah admin/pemilik setelah pembayaran lunas).
+    Route::post('/penerimaan-bahan-baku/{penerimaanBahanBaku}/receipt', [PenerimaanBahanBakuController::class, 'uploadReceipt'])->name('penerimaan-bahan-baku.upload-receipt');
+    Route::delete('/penerimaan-bahan-baku/{penerimaanBahanBaku}/receipt', [PenerimaanBahanBakuController::class, 'hapusReceipt'])->name('penerimaan-bahan-baku.hapus-receipt');
 });
 
 // =================== Laporan (Admin & Pemilik) ===================

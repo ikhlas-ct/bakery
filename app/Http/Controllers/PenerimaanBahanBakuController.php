@@ -7,12 +7,16 @@ use App\Models\BahanBaku;
 use App\Models\PenerimaanBahanBaku;
 use App\Models\PenerimaanBahanBakuDetail;
 use App\Models\PermintaanBahanBaku;
+use App\Models\Pemilik;
 use App\Models\PermintaanBahanBakuDetail;
 use App\Models\Produsen;
 use Carbon\Carbon;
+use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -21,7 +25,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 /**
- * Penerimaan Bahan Baku (dikelola Admin).
+ * Penerimaan Bahan Baku (dikelola Admin DAN Pemilik dengan hak akses yang sama).
  *
  * Alur:
  *  1. Produsen menyetujui permintaan bahan baku (penuh / sebagian). Kekurangan yang ditandai
@@ -35,8 +39,30 @@ use Illuminate\View\View;
  *  4. Tagihan pada tabel `pembayarans` (per permintaan + produsen) disinkronkan otomatis
  *     = SUM(jumlah_diterima x harga_satuan).
  */
-class PenerimaanBahanBakuController extends Controller
+class PenerimaanBahanBakuController extends Controller implements HasMiddleware
 {
+    /** Peran yang boleh mengakses seluruh modul ini (tanpa pembatasan antar peran). */
+    private const ROLE_BOLEH = ['admin', 'pemilik'];
+
+    /**
+     * Rute modul ini hanya memakai middleware 'auth'; pembatasan peran dilakukan di sini
+     * (admin & pemilik), sama seperti pada modul Laporan. Peran lain (produsen) mendapat 403.
+     */
+    public static function middleware(): array
+    {
+        return [
+            new Middleware(function (Request $request, Closure $next) {
+                abort_unless(
+                    in_array(auth()->user()?->role, self::ROLE_BOLEH, true),
+                    403,
+                    'Anda tidak memiliki akses ke modul Penerimaan Bahan Baku.'
+                );
+
+                return $next($request);
+            }),
+        ];
+    }
+
     private const STATUS_SETUJU = ['disetujui', 'disetujui_sebagian'];
 
     private const METODE_BAYAR = ['Tunai', 'Transfer'];
@@ -145,9 +171,9 @@ class PenerimaanBahanBakuController extends Controller
         }
 
         $produsenId = (int) $data['produsen_id'];
-        $admin = Admin::where('user_id', auth()->id())->firstOrFail();
+        $pencatat = $this->pencatat();
 
-        $penerimaan = DB::transaction(function () use ($data, $items, $produsenId, $admin) {
+        $penerimaan = DB::transaction(function () use ($data, $items, $produsenId, $pencatat) {
             $baris = $this->hitungBaris($produsenId);
 
             // Validasi tiap item terhadap batas yang disetujui produsen.
@@ -181,7 +207,8 @@ class PenerimaanBahanBakuController extends Controller
             $tanggal = Carbon::parse($data['tanggal_terima']);
 
             $penerimaan = PenerimaanBahanBaku::create([
-                'admin_id' => $admin->id,
+                'admin_id' => $pencatat['admin_id'],
+                'pemilik_id' => $pencatat['pemilik_id'],
                 'produsen_id' => $produsenId,
                 'nomor_transaksi' => $this->generateNomor($tanggal),
                 'tanggal_terima' => $tanggal->toDateString(),
@@ -258,7 +285,7 @@ class PenerimaanBahanBakuController extends Controller
     }
 
     // =========================================================================
-    // Pembayaran (admin boleh langsung membayar, tanpa menunggu pemilik)
+    // Pembayaran (admin maupun pemilik boleh langsung membayar)
     // =========================================================================
 
     public function bayar(Request $request, PenerimaanBahanBaku $penerimaanBahanBaku): RedirectResponse
@@ -283,10 +310,11 @@ class PenerimaanBahanBakuController extends Controller
         $permintaanId = (int) $data['permintaan_bahan_baku_id'];
         $produsenId = (int) $penerimaanBahanBaku->produsen_id;
 
+        $pemilikId = $this->pemilikId();
         $pathBukti = null;
 
         try {
-            DB::transaction(function () use ($data, $request, $penerimaanBahanBaku, $permintaanId, $produsenId, &$pathBukti) {
+            DB::transaction(function () use ($data, $request, $penerimaanBahanBaku, $permintaanId, $produsenId, $pemilikId, &$pathBukti) {
                 if (! in_array($permintaanId, $this->permintaanIds($penerimaanBahanBaku->penerimaanBahanBakuDetails), true)) {
                     throw ValidationException::withMessages(['pembayaran' => 'Permintaan tidak terkait dengan penerimaan ini.']);
                 }
@@ -319,14 +347,20 @@ class PenerimaanBahanBakuController extends Controller
                 // File baru disimpan setelah semua pengecekan lolos agar tidak ada file yatim.
                 $pathBukti = $request->file('bukti_bayar')->store('bukti-pembayaran', 'public');
 
-                DB::table('pembayarans')->where('id', $bayar->id)->update([
-                    'status_acc' => 'disetujui', // dibayar langsung oleh admin
+                $ubah = [
+                    'status_acc' => 'disetujui', // dibayar langsung oleh admin / pemilik
                     'status_bayar' => 'lunas',
                     'tanggal_bayar' => $data['tanggal_bayar'],
                     'metode_bayar' => $data['metode_bayar'],
                     'bukti_bayar' => $pathBukti,
                     'updated_at' => now(),
-                ]);
+                ];
+                // pemilik_id hanya diisi bila pemilik yang membayar (null = diproses admin).
+                if ($pemilikId) {
+                    $ubah['pemilik_id'] = $pemilikId;
+                }
+
+                DB::table('pembayarans')->where('id', $bayar->id)->update($ubah);
             });
         } catch (ValidationException $e) {
             $this->hapusFile($pathBukti);
@@ -769,6 +803,34 @@ class PenerimaanBahanBakuController extends Controller
             'created_at' => $now,
             'updated_at' => $now,
         ]);
+    }
+
+    /**
+     * Siapa yang mencatat penerimaan: admin (admin_id) atau pemilik (pemilik_id).
+     *
+     * @return array{admin_id: int|null, pemilik_id: int|null}
+     */
+    private function pencatat(): array
+    {
+        if (auth()->user()->role === 'pemilik') {
+            $pemilik = Pemilik::where('user_id', auth()->id())->firstOrFail();
+
+            return ['admin_id' => null, 'pemilik_id' => (int) $pemilik->id];
+        }
+
+        $admin = Admin::where('user_id', auth()->id())->firstOrFail();
+
+        return ['admin_id' => (int) $admin->id, 'pemilik_id' => null];
+    }
+
+    /** id pemilik yang sedang login (null bila yang login admin). */
+    private function pemilikId(): ?int
+    {
+        if (auth()->user()->role !== 'pemilik') {
+            return null;
+        }
+
+        return (int) Pemilik::where('user_id', auth()->id())->firstOrFail()->id;
     }
 
     /** Hapus file dari disk public bila ada (aman dipanggil dengan null). */

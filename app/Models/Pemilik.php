@@ -24,6 +24,11 @@ class Pemilik extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function penerimaanBahanBakus(): HasMany
+    {
+        return $this->hasMany(PenerimaanBahanBaku::class);
+    }
+
     public function pembayarans(): HasMany
     {
         return $this->hasMany(Pembayaran::class);
