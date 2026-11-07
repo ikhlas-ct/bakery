@@ -19,6 +19,8 @@ use App\Http\Controllers\PembayaranProdusenController;
 use App\Http\Controllers\RiwayatPengirimanController;
 use App\Http\Controllers\LaporanPenerimaanBahanBakuController;
 use App\Http\Controllers\LaporanPemakaianBahanBakuController;
+use App\Http\Controllers\LaporanStokController;
+use App\Http\Controllers\LaporanKartuStokController;
 use App\Http\Controllers\LaporanReceiptPembayaranController;
 use Illuminate\Support\Facades\Route;
 
@@ -171,6 +173,14 @@ Route::middleware(['auth'])->prefix('laporan')->name('laporan.')->group(function
     Route::get('/pemakaian-bahan-baku/cetak', [LaporanPemakaianBahanBakuController::class, 'cetak'])->name('pemakaian-bahan-baku.cetak');
     // Cetak satu transaksi pemakaian saja (tombol Cetak di halaman daftar & detail pemakaian).
     Route::get('/pemakaian-bahan-baku/{pemakaianBahanBaku}/cetak', [LaporanPemakaianBahanBakuController::class, 'cetakTransaksi'])->name('pemakaian-bahan-baku.cetak-transaksi');
+
+    // Laporan Stok (posisi stok per tanggal + rincian batch penerimaan berurutan FEFO).
+    Route::get('/stok', [LaporanStokController::class, 'index'])->name('stok.index');
+    Route::get('/stok/cetak', [LaporanStokController::class, 'cetak'])->name('stok.cetak');
+
+    // Kartu Stok (mutasi masuk/keluar + saldo berjalan per bahan baku, lengkap dengan batch asalnya).
+    Route::get('/kartu-stok', [LaporanKartuStokController::class, 'index'])->name('kartu-stok.index');
+    Route::get('/kartu-stok/cetak', [LaporanKartuStokController::class, 'cetak'])->name('kartu-stok.cetak');
 
     // Receipt Pembayaran (satu receipt per penerimaan, hanya yang lunas).
     Route::get('/receipt-pembayaran', [LaporanReceiptPembayaranController::class, 'index'])->name('receipt-pembayaran.index');

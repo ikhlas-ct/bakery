@@ -155,6 +155,20 @@
                     </a>
                 </li>
 
+                <li class="nav-item {{ request()->routeIs('laporan.stok.*') ? 'active' : '' }}">
+                    <a href="{{ route('laporan.stok.index') }}">
+                        <i class="fas fa-warehouse"></i>
+                        <p>Laporan Stok Bahan Baku</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('laporan.kartu-stok.*') ? 'active' : '' }}">
+                    <a href="{{ route('laporan.kartu-stok.index') }}">
+                        <i class="fas fa-book"></i>
+                        <p>Kartu Stok</p>
+                    </a>
+                </li>
+
                 <li class="nav-item {{ request()->routeIs('laporan.receipt-pembayaran.*') ? 'active' : '' }}">
                     <a href="{{ route('laporan.receipt-pembayaran.index') }}">
                         <i class="fas fa-receipt"></i>
@@ -232,6 +246,20 @@
                     <a href="{{ route('laporan.pemakaian-bahan-baku.index') }}">
                         <i class="fas fa-clipboard-list"></i>
                         <p>Laporan Pemakaian Bahan Baku</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('laporan.stok.*') ? 'active' : '' }}">
+                    <a href="{{ route('laporan.stok.index') }}">
+                        <i class="fas fa-warehouse"></i>
+                        <p>Laporan Stok Bahan Baku</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('laporan.kartu-stok.*') ? 'active' : '' }}">
+                    <a href="{{ route('laporan.kartu-stok.index') }}">
+                        <i class="fas fa-book"></i>
+                        <p>Kartu Stok</p>
                     </a>
                 </li>
 
