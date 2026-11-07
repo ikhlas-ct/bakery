@@ -67,6 +67,8 @@
     }
     .btn-detail { background: #eff6ff; color: #1d4ed8; }
     .btn-detail:hover { background: #1d4ed8; color: #fff; }
+    .btn-cetak { background: #f0fdf4; color: #16a34a; }
+    .btn-cetak:hover { background: #16a34a; color: #fff; }
     .btn-edit { background: #fff7ed; color: #c2410c; }
     .btn-edit:hover { background: #c2410c; color: #fff; }
     .btn-hapus { background: #fef2f2; color: #dc2626; }
@@ -240,7 +242,7 @@
                             <th>Tanggal Pakai</th>
                             <th>Bahan Baku Dipakai</th>
                             <th>Dicatat Oleh</th>
-                            <th width="120">Aksi</th>
+                            <th width="150">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -277,6 +279,10 @@
                                         <a href="{{ route('pemakaian-bahan-baku.show', $p->id) }}"
                                             class="btn btn-action btn-detail" title="Detail">
                                             <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('laporan.pemakaian-bahan-baku.cetak-transaksi', ['pemakaianBahanBaku' => $p->id, 'cetak' => 1]) }}"
+                                            target="_blank" rel="noopener" class="btn btn-action btn-cetak" title="Cetak Laporan">
+                                            <i class="fas fa-print"></i>
                                         </a>
                                         <a href="{{ route('pemakaian-bahan-baku.edit', $p->id) }}"
                                             class="btn btn-action btn-edit" title="Edit">

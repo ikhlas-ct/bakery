@@ -148,6 +148,13 @@
                     </a>
                 </li>
 
+                <li class="nav-item {{ request()->routeIs('laporan.pemakaian-bahan-baku.*') ? 'active' : '' }}">
+                    <a href="{{ route('laporan.pemakaian-bahan-baku.index') }}">
+                        <i class="fas fa-clipboard-list"></i>
+                        <p>Laporan Pemakaian Bahan Baku</p>
+                    </a>
+                </li>
+
                 <li class="nav-item {{ request()->routeIs('laporan.receipt-pembayaran.*') ? 'active' : '' }}">
                     <a href="{{ route('laporan.receipt-pembayaran.index') }}">
                         <i class="fas fa-receipt"></i>
@@ -204,6 +211,13 @@
                     <a href="{{ route('laporan.penerimaan-bahan-baku.index') }}">
                         <i class="fas fa-file-alt"></i>
                         <p>Laporan Penerimaan Barang</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('laporan.pemakaian-bahan-baku.*') ? 'active' : '' }}">
+                    <a href="{{ route('laporan.pemakaian-bahan-baku.index') }}">
+                        <i class="fas fa-clipboard-list"></i>
+                        <p>Laporan Pemakaian Bahan Baku</p>
                     </a>
                 </li>
 

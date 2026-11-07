@@ -16,6 +16,7 @@ use App\Http\Controllers\PenerimaanBahanBakuController;
 use App\Http\Controllers\PemakaianBahanBakuController;
 use App\Http\Controllers\PermintaanTambahanController;
 use App\Http\Controllers\LaporanPenerimaanBahanBakuController;
+use App\Http\Controllers\LaporanPemakaianBahanBakuController;
 use App\Http\Controllers\LaporanReceiptPembayaranController;
 use Illuminate\Support\Facades\Route;
 
@@ -151,6 +152,12 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 Route::middleware(['auth'])->prefix('laporan')->name('laporan.')->group(function () {
     Route::get('/penerimaan-bahan-baku', [LaporanPenerimaanBahanBakuController::class, 'index'])->name('penerimaan-bahan-baku.index');
     Route::get('/penerimaan-bahan-baku/cetak', [LaporanPenerimaanBahanBakuController::class, 'cetak'])->name('penerimaan-bahan-baku.cetak');
+
+    // Laporan Pemakaian Bahan Baku (FEFO) per periode: harian, bulanan, tahunan, atau antara dua tanggal.
+    Route::get('/pemakaian-bahan-baku', [LaporanPemakaianBahanBakuController::class, 'index'])->name('pemakaian-bahan-baku.index');
+    Route::get('/pemakaian-bahan-baku/cetak', [LaporanPemakaianBahanBakuController::class, 'cetak'])->name('pemakaian-bahan-baku.cetak');
+    // Cetak satu transaksi pemakaian saja (tombol Cetak di halaman daftar & detail pemakaian).
+    Route::get('/pemakaian-bahan-baku/{pemakaianBahanBaku}/cetak', [LaporanPemakaianBahanBakuController::class, 'cetakTransaksi'])->name('pemakaian-bahan-baku.cetak-transaksi');
 
     // Receipt Pembayaran (satu receipt per penerimaan, hanya yang lunas).
     Route::get('/receipt-pembayaran', [LaporanReceiptPembayaranController::class, 'index'])->name('receipt-pembayaran.index');

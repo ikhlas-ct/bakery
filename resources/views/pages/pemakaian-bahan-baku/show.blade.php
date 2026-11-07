@@ -113,6 +113,10 @@
                 <a href="{{ route('pemakaian-bahan-baku.index') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="fas fa-arrow-left me-1"></i> Kembali
                 </a>
+                <a href="{{ route('laporan.pemakaian-bahan-baku.cetak-transaksi', ['pemakaianBahanBaku' => $pemakaian->id, 'cetak' => 1]) }}"
+                    target="_blank" rel="noopener" class="btn btn-success btn-sm">
+                    <i class="fas fa-print me-1"></i> Cetak Laporan
+                </a>
                 <a href="{{ route('pemakaian-bahan-baku.edit', $pemakaian->id) }}" class="btn btn-warning btn-sm text-white">
                     <i class="fas fa-pencil-alt me-1"></i> Edit
                 </a>
