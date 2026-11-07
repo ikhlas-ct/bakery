@@ -21,6 +21,7 @@ use App\Http\Controllers\LaporanPenerimaanBahanBakuController;
 use App\Http\Controllers\LaporanPemakaianBahanBakuController;
 use App\Http\Controllers\LaporanStokController;
 use App\Http\Controllers\LaporanKartuStokController;
+use App\Http\Controllers\LaporanKedaluwarsaController;
 use App\Http\Controllers\LaporanReceiptPembayaranController;
 use Illuminate\Support\Facades\Route;
 
@@ -177,6 +178,10 @@ Route::middleware(['auth'])->prefix('laporan')->name('laporan.')->group(function
     // Laporan Stok (posisi stok per tanggal + rincian batch penerimaan berurutan FEFO).
     Route::get('/stok', [LaporanStokController::class, 'index'])->name('stok.index');
     Route::get('/stok/cetak', [LaporanStokController::class, 'cetak'])->name('stok.cetak');
+
+    // Laporan Bahan Baku Mendekati Kedaluwarsa (batch FEFO yang sudah/akan kedaluwarsa, bisa dicetak).
+    Route::get('/kedaluwarsa', [LaporanKedaluwarsaController::class, 'index'])->name('kedaluwarsa.index');
+    Route::get('/kedaluwarsa/cetak', [LaporanKedaluwarsaController::class, 'cetak'])->name('kedaluwarsa.cetak');
 
     // Kartu Stok (mutasi masuk/keluar + saldo berjalan per bahan baku, lengkap dengan batch asalnya).
     Route::get('/kartu-stok', [LaporanKartuStokController::class, 'index'])->name('kartu-stok.index');

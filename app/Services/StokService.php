@@ -176,6 +176,81 @@ class StokService
     }
 
     /* ─────────────────────────────────────────────────────────────
+     |  BAHAN BAKU MENDEKATI KEDALUWARSA
+     ───────────────────────────────────────────────────────────── */
+
+    /** Sisa hari <= nilai ini dianggap "mendesak" di laporan kedaluwarsa. */
+    public const BATAS_MENDESAK = 7;
+
+    /**
+     * Batch yang sudah kedaluwarsa atau akan kedaluwarsa dalam $hari hari ke depan
+     * (hanya batch yang MASIH punya sisa stok), diurutkan dari yang paling mendesak.
+     *
+     * level: kadaluarsa (sisa hari < 0) | mendesak (0..BATAS_MENDESAK) | mendekati (sisanya)
+     *
+     * @param  string  $tampil  semua | mendekati | kadaluarsa
+     * @param  array{search?:string,kategori_barang_id?:int|string}  $filter
+     */
+    public function batchKedaluwarsa(Carbon $per, int $hari = 30, string $tampil = 'semua', array $filter = []): Collection
+    {
+        $per = $per->copy()->startOfDay();
+
+        $bahanBakus = BahanBaku::query()
+            ->with(['kategoriBarang', 'satuan'])
+            ->when($filter['search'] ?? null, function ($q, $s) {
+                $q->where(function ($w) use ($s) {
+                    $w->where('kode_bahan_baku', 'like', "%{$s}%")
+                        ->orWhere('nama_bahan_baku', 'like', "%{$s}%");
+                });
+            })
+            ->when($filter['kategori_barang_id'] ?? null, fn ($q, $v) => $q->where('kategori_barang_id', $v))
+            ->get();
+
+        $batches = $this->batchPerBahan($bahanBakus->pluck('id'), $per);
+
+        return $bahanBakus->toBase()
+            ->flatMap(function (BahanBaku $b) use ($batches, $hari, $tampil) {
+                return $batches->get($b->id, collect())
+                    ->filter(function ($bt) use ($hari, $tampil) {
+                        if ($bt->sisa_hari === null) {
+                            return false; // tanpa tanggal kedaluwarsa
+                        }
+
+                        $lewat = $bt->sisa_hari < 0;
+                        $dekat = ! $lewat && $bt->sisa_hari <= $hari;
+
+                        return match ($tampil) {
+                            'kadaluarsa' => $lewat,
+                            'mendekati'  => $dekat,
+                            default      => $lewat || $dekat,
+                        };
+                    })
+                    ->map(fn ($bt) => (object) [
+                        'bahan' => $b,
+                        'batch' => $bt,
+                        'level' => $bt->sisa_hari < 0
+                            ? 'kadaluarsa'
+                            : ($bt->sisa_hari <= self::BATAS_MENDESAK ? 'mendesak' : 'mendekati'),
+                    ]);
+            })
+            ->sort(fn ($a, $b) => [$a->batch->sisa_hari, $a->bahan->nama_bahan_baku]
+                <=> [$b->batch->sisa_hari, $b->bahan->nama_bahan_baku])
+            ->values();
+    }
+
+    /** Angka ringkas untuk stat card laporan kedaluwarsa. */
+    public function ringkasanKedaluwarsa(Collection $rows): array
+    {
+        return [
+            'total_batch' => $rows->count(),
+            'bahan'       => $rows->pluck('bahan.id')->unique()->count(),
+            'kadaluarsa'  => $rows->where('level', 'kadaluarsa')->count(),
+            'mendesak'    => $rows->where('level', 'mendesak')->count(),
+            'mendekati'   => $rows->where('level', 'mendekati')->count(),
+        ];
+    }
+
+    /* ─────────────────────────────────────────────────────────────
      |  KARTU STOK
      ───────────────────────────────────────────────────────────── */
 

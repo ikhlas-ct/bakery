@@ -162,6 +162,13 @@
                     </a>
                 </li>
 
+                <li class="nav-item {{ request()->routeIs('laporan.kedaluwarsa.*') ? 'active' : '' }}">
+                    <a href="{{ route('laporan.kedaluwarsa.index') }}">
+                        <i class="fas fa-hourglass-half"></i>
+                        <p>Bahan Baku Mendekati Kedaluwarsa</p>
+                    </a>
+                </li>
+
                 <li class="nav-item {{ request()->routeIs('laporan.kartu-stok.*') ? 'active' : '' }}">
                     <a href="{{ route('laporan.kartu-stok.index') }}">
                         <i class="fas fa-book"></i>
@@ -253,6 +260,13 @@
                     <a href="{{ route('laporan.stok.index') }}">
                         <i class="fas fa-warehouse"></i>
                         <p>Laporan Stok Bahan Baku</p>
+                    </a>
+                </li>
+
+                <li class="nav-item {{ request()->routeIs('laporan.kedaluwarsa.*') ? 'active' : '' }}">
+                    <a href="{{ route('laporan.kedaluwarsa.index') }}">
+                        <i class="fas fa-hourglass-half"></i>
+                        <p>Bahan Baku Mendekati Kedaluwarsa</p>
                     </a>
                 </li>
 
