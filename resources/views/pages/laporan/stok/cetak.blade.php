@@ -46,6 +46,8 @@
         table.lap th, table.lap td { border: 1px solid #444; padding: 5px 7px; vertical-align: top; }
         table.lap thead th { background: #e5e7eb; text-align: center; font-size: 11px; }
         table.lap tr.total td { font-weight: 800; background: #f3f4f6; }
+        .total-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px 14px; }
+        .total-grid div { text-align: right; white-space: nowrap; }
         .c { text-align: center; }
         .r { text-align: right; white-space: nowrap; }
         .nw { white-space: nowrap; }
@@ -74,9 +76,6 @@
         $qty = fn ($v) => number_format((float) $v, 2, ',', '.');
         $satuanOf = fn ($bahan) => mb_strtolower($bahan?->satuan?->kode_satuan ?: ($bahan?->satuan?->nama ?? ''));
         $tgl = fn ($d) => $d ? $d->format('d/m/Y') : '-';
-        $totalText = $totalPerSatuan->isEmpty()
-            ? '0,00'
-            : $totalPerSatuan->map(fn ($total, $sat) => $qty($total) . ' ' . $sat)->implode(' + ');
         $tanggalCetak = now()->locale('id');
         $namaAdmin = $pencetak->role === 'admin' ? $pencetak->username : null;
         $namaToko = $setting?->nama ?: 'Roti Baru Bakery';
@@ -155,7 +154,13 @@
                 @if ($rows->isNotEmpty())
                     <tr class="total">
                         <td colspan="4" class="r">Total</td>
-                        <td class="r" colspan="3">{{ $totalText }}</td>
+                        <td colspan="3">
+                            <div class="total-grid">
+                                @foreach ($totalPerSatuan->sortKeys() as $sat => $total)
+                                    <div>{{ $qty($total) }} {{ $sat }}</div>
+                                @endforeach
+                            </div>
+                        </td>
                     </tr>
                 @endif
             </tbody>

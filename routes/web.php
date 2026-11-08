@@ -230,5 +230,9 @@ Route::middleware(['auth', 'role:produsen'])->group(function () {
 
     // =================== Pembayaran Saya (hanya baca; milik produsen yang login) ===================
     Route::get('/produsen/pembayaran', [PembayaranProdusenController::class, 'index'])->name('produsen.pembayaran.index');
+    // Cetak laporan per periode. HARUS sebelum route {pembayaran}, kalau tidak 'cetak' dibaca sebagai ID.
+    Route::get('/produsen/pembayaran/cetak', [PembayaranProdusenController::class, 'cetak'])->name('produsen.pembayaran.cetak');
     Route::get('/produsen/pembayaran/{pembayaran}', [PembayaranProdusenController::class, 'show'])->name('produsen.pembayaran.show');
+    // Cetak rincian satu pembayaran.
+    Route::get('/produsen/pembayaran/{pembayaran}/cetak', [PembayaranProdusenController::class, 'cetakTransaksi'])->name('produsen.pembayaran.cetak-transaksi');
 });

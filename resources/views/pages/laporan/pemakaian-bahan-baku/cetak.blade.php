@@ -219,8 +219,8 @@
                 <div class="nama">( <span class="garis">&nbsp;</span> )</div>
             </div>
             <div class="box">
-                <div>{{ $kota }}, {{ $tanggalCetak->translatedFormat('d F Y') }}</div>
-                <div>Admin Gudang</div>
+                <div>Padang, {{ $tanggalCetak->translatedFormat('d F Y') }}</div>
+                <div>Admin</div>
                 <div class="ruang"></div>
                 <div class="nama">
                     @if ($namaAdmin)

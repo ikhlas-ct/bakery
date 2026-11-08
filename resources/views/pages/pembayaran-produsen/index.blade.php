@@ -118,6 +118,9 @@
         }
         .btn-detail { background: #eff6ff; color: #1a73e8; }
         .btn-detail:hover { background: #1a73e8; color: #fff; }
+        .btn-cetak { background: #f0fdf4; color: #16a34a; }
+        .btn-cetak:hover { background: #16a34a; color: #fff; }
+        .lbl-filter { font-size: .85rem; font-weight: 700; color: #334155; margin-bottom: 6px; display: block; }
 
         /* ===== EMPTY STATE ===== */
         .empty-state { padding: 48px 24px; }
@@ -137,7 +140,10 @@
 @section('content')
     @php
         $rupiah = fn ($v) => 'Rp ' . number_format((float) $v, 0, ',', '.');
-        $adaFilter = request()->hasAny(['status_bayar', 'status_acc', 'metode_bayar', 'dari', 'sampai']);
+        // Jenis laporan terpilih: dari request; link lama (?dari=&sampai=) dianggap "Antara Tanggal".
+        $jenis = request('jenis') ?: (request()->filled('dari') || request()->filled('sampai') ? 'rentang' : 'semua');
+        $adaFilter = request()->filled('status_bayar') || request()->filled('status_acc')
+            || request()->filled('metode_bayar') || $jenis !== 'semua';
     @endphp
     <div class="container">
 
@@ -212,18 +218,54 @@
                 <span class="text-muted" style="font-size:.78rem;">{{ $pembayarans->total() }} data ditemukan</span>
             </div>
 
-            {{-- Filter --}}
-            <div class="filter-section">
-                <form method="GET" action="{{ route('produsen.pembayaran.index') }}" class="row g-2 align-items-end">
+            {{-- Filter + Cetak: Jenis laporan -> periode -> status -> Tampilkan / Cetak --}}
+            <div class="filter-section" id="panelFilter">
+                <form method="GET" action="{{ route('produsen.pembayaran.index') }}" class="row g-3 align-items-end">
+
                     <div class="col-md-2 col-sm-6">
-                        <select name="status_bayar" class="form-select form-select-sm">
+                        <label class="lbl-filter" for="filterJenis">Jenis laporan</label>
+                        <select name="jenis" id="filterJenis" class="form-select form-select-sm">
+                            @foreach (['semua' => 'Semua Periode', 'harian' => 'Harian', 'bulanan' => 'Bulanan', 'tahunan' => 'Tahunan', 'rentang' => 'Antara Tanggal'] as $val => $label)
+                                <option value="{{ $val }}" {{ $jenis === $val ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-md-2 col-sm-6 opsi-periode" data-jenis="harian">
+                        <label class="lbl-filter">Tanggal</label>
+                        <input type="date" name="tanggal" class="form-control form-control-sm"
+                            value="{{ request('tanggal', now()->toDateString()) }}">
+                    </div>
+                    <div class="col-md-2 col-sm-6 opsi-periode" data-jenis="bulanan">
+                        <label class="lbl-filter">Bulan</label>
+                        <input type="month" name="bulan" class="form-control form-control-sm"
+                            value="{{ request('bulan', now()->format('Y-m')) }}">
+                    </div>
+                    <div class="col-md-2 col-sm-6 opsi-periode" data-jenis="tahunan">
+                        <label class="lbl-filter">Tahun</label>
+                        <input type="number" name="tahun" min="2000" max="2100" class="form-control form-control-sm"
+                            value="{{ request('tahun', now()->year) }}">
+                    </div>
+                    <div class="col-md-2 col-sm-6 opsi-periode" data-jenis="rentang">
+                        <label class="lbl-filter">Dari tanggal</label>
+                        <input type="date" name="dari" class="form-control form-control-sm" value="{{ request('dari') }}">
+                    </div>
+                    <div class="col-md-2 col-sm-6 opsi-periode" data-jenis="rentang">
+                        <label class="lbl-filter">Sampai tanggal</label>
+                        <input type="date" name="sampai" class="form-control form-control-sm" value="{{ request('sampai') }}">
+                    </div>
+
+                    <div class="col-md-2 col-sm-6">
+                        <label class="lbl-filter" for="filterStatusBayar">Status bayar</label>
+                        <select name="status_bayar" id="filterStatusBayar" class="form-select form-select-sm">
                             <option value="">Semua Status Bayar</option>
                             <option value="belum" @selected(request('status_bayar') === 'belum')>Belum dibayar</option>
                             <option value="lunas" @selected(request('status_bayar') === 'lunas')>Lunas</option>
                         </select>
                     </div>
                     <div class="col-md-2 col-sm-6">
-                        <select name="status_acc" class="form-select form-select-sm">
+                        <label class="lbl-filter" for="filterStatusAcc">Status ACC</label>
+                        <select name="status_acc" id="filterStatusAcc" class="form-select form-select-sm">
                             <option value="">Semua Status ACC</option>
                             <option value="menunggu" @selected(request('status_acc') === 'menunggu')>Menunggu</option>
                             <option value="disetujui" @selected(request('status_acc') === 'disetujui')>Disetujui</option>
@@ -231,29 +273,30 @@
                         </select>
                     </div>
                     <div class="col-md-2 col-sm-6">
-                        <select name="metode_bayar" class="form-select form-select-sm">
+                        <label class="lbl-filter" for="filterMetode">Metode</label>
+                        <select name="metode_bayar" id="filterMetode" class="form-select form-select-sm">
                             <option value="">Semua Metode</option>
                             <option value="Tunai" @selected(request('metode_bayar') === 'Tunai')>Tunai</option>
                             <option value="Transfer" @selected(request('metode_bayar') === 'Transfer')>Transfer</option>
                         </select>
                     </div>
-                    <div class="col-md-2 col-sm-6">
-                        <input type="date" name="dari" class="form-control form-control-sm"
-                            value="{{ request('dari') }}" title="Dari tanggal (tanggal bayar / tanggal tagihan)">
-                    </div>
-                    <div class="col-md-2 col-sm-6">
-                        <input type="date" name="sampai" class="form-control form-control-sm"
-                            value="{{ request('sampai') }}" title="Sampai tanggal (tanggal bayar / tanggal tagihan)">
-                    </div>
-                    <div class="col-md-auto d-flex gap-2">
+
+                    <div class="col-12 d-flex flex-wrap gap-2">
                         <button type="submit" class="btn btn-primary btn-sm px-3">
-                            <i class="fas fa-filter me-1"></i> Cari
+                            <i class="fas fa-search me-1"></i> Tampilkan
+                        </button>
+                        <button type="submit" formaction="{{ route('produsen.pembayaran.cetak') }}" formtarget="_blank"
+                            class="btn btn-success btn-sm px-3">
+                            <i class="fas fa-print me-1"></i> Cetak / PDF
                         </button>
                         @if ($adaFilter)
                             <a href="{{ route('produsen.pembayaran.index') }}" class="btn btn-outline-secondary btn-sm px-3">
                                 <i class="fas fa-times me-1"></i> Reset
                             </a>
                         @endif
+                    </div>
+                    <div class="col-12 sub-text" style="margin-top:-4px;">
+                        Periode memakai tanggal bayar; tagihan yang belum dibayar memakai tanggal tagihan dibuat.
                     </div>
                 </form>
             </div>
@@ -270,7 +313,7 @@
                             <th>Status</th>
                             <th>Tanggal Bayar</th>
                             <th>Bukti</th>
-                            <th width="70">Aksi</th>
+                            <th width="90">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -318,9 +361,15 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('produsen.pembayaran.show', $p->id) }}" class="btn-action btn-detail" title="Detail">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
+                                    <div class="d-flex gap-1">
+                                        <a href="{{ route('produsen.pembayaran.show', $p->id) }}" class="btn-action btn-detail" title="Detail">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('produsen.pembayaran.cetak-transaksi', $p->id) }}" target="_blank"
+                                            class="btn-action btn-cetak" title="Cetak rincian pembayaran ini">
+                                            <i class="fas fa-print"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -355,4 +404,22 @@
         </div>
 
     </div>
+    <script>
+        (function () {
+            var jenis = document.getElementById('filterJenis');
+            if (!jenis) return;
+
+            function tampilkanOpsi() {
+                document.querySelectorAll('#panelFilter .opsi-periode').forEach(function (el) {
+                    var aktif = el.dataset.jenis === jenis.value;
+                    el.style.display = aktif ? '' : 'none';
+                    // input yang disembunyikan tidak ikut dikirim
+                    el.querySelectorAll('input').forEach(function (inp) { inp.disabled = !aktif; });
+                });
+            }
+
+            jenis.addEventListener('change', tampilkanOpsi);
+            tampilkanOpsi();
+        })();
+    </script>
 @endsection
